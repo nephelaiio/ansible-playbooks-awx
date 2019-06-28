@@ -1,0 +1,66 @@
+---
+- name: Install awx
+
+  hosts: awx
+
+  become: yes
+
+  roles:
+
+    - nephelaiio.plugins
+
+  tasks:
+
+    - name: include private variables
+      include_vars:
+        dir: "../{{ item }}"
+      with_items: "{{ vaults }}"
+      tags:
+        - always
+
+    - name: install docker
+      include_role:
+        name: geerlingguy.docker
+
+    - name: install docker pips
+      pip:
+        name: "{{ item }}"
+        extra_args: --trusted-host files.pythonhosted.org --trusted-host pypi.org --trusted-host pypi.python.org
+      with_items:
+        - docker
+        - docker-compose
+
+    - name: define awx installer variables
+      set_fact:
+        dockerhub_base: ansible
+        dockerhub_version: "{{ awx_version }}"
+        admin_user: "{{ awx_admin_user }}"
+        admin_password: "{{ awx_admin_pass }}"
+        rabbitmq_user: "{{ awx_rabbitmq_username }}"
+        rabbitmq_password: "{{ awx_rabbitmq_password }}"
+        host_port: "{{ awx_port }}"
+        secret_key: "{{ awx_secret_key }}"
+        pg_hostname: "{{ ansible_default_ipv4.address }}"
+        pg_username: "{{ awx_pg_user }}"
+        pg_password: "{{ awx_pg_pass }}"
+        pg_database: "{{ awx_pg_db }}"
+        pg_port: "{{ awx_pg_port }}"
+
+    - name: set docker image
+      include_tasks: set_image.yml
+
+    - name: install local docker awx images
+      include_tasks: compose.yml
+
+    - name: wait for awx container startup
+      wait_for:
+        port: "{{ awx_port }}"
+        delay: 30
+
+    - include_tasks: ../dns/nsupdate.yml
+      loop_control:
+        loop_var: nsrecord
+      with_items:
+        - name: "{{ awx_url | urlsplit('hostname') }}"
+          type: A
+          value: "{{ f5_vips.awx_https.address }}"

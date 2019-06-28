@@ -1,0 +1,12 @@
+---
+language: python
+
+sudo: required
+
+install:
+  - sudo pip install yamllint
+  - sudo pip install flake8
+
+script:
+  - yamllint ./ -c ./.yamllint
+  - flake8 ./
