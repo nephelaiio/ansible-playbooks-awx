@@ -1,6 +1,6 @@
 ---
 - name: retrieve organization id
-  command: "awx-cli organization get -n \"{{ organization }}\" -f json"
+  command: "awx-cli organization get -n \"{{ organization.name }}\" -f json"
   changed_when: false
   register: org_id
 
@@ -23,7 +23,7 @@
     project_source_create_args: "{{ name }} {{ description }} {{ scm_type }} {{ scm_url }} {{ scm_branch }} {{ scm_credential }} {{ scm_clean }} {{ scm_delete_on_update }} {{ scm_update_on_launch }} {{ job_timeout }}"
 
 - name: create project
-  command: "awx-cli project create --monitor --organization {{ organization }} {{ scm_update_cache_timeout }} {{ project_source_create_args }} --force-on-exists"
+  command: "awx-cli project create --monitor --organization {{ organization.name }} {{ scm_update_cache_timeout }} {{ project_source_create_args }} --force-on-exists"
   changed_when: false
 
 - name: update project
