@@ -10,3 +10,8 @@
 
     - name: run ansible galaxy
       command: ansible-galaxy install -r roles/requirements.yml -p galaxy/ --force
+
+    - name: pull git submodules
+      command: git submodule update --recursive
+      tags:
+        - skip_ansible_lint
