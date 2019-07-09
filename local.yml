@@ -27,7 +27,7 @@
     secret_key: "{{ awx_secret_key }}"
     create_preload_data: no
     rabbitmq_user: "{{ awx_rabbitmq_user | default('awx') }}"
-    rabbitmq_password: "{{ awx_rabbitmq_password }}"
+    rabbitmq_password: "{{ awx_rabbitmq_pass}}"
     rabbitmq_erlang_cookie: "{{ awx_rabbitmq_erlangcookie | default('hotfudgepecans') }}"
 
   roles:
