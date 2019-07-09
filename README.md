@@ -8,9 +8,21 @@ A set of [ansible playbooks](https://galaxy.ansible.com/nephelaiio/ansible-playb
 
 The following parameters are available/required for playbook invocation
 
+### [local.yml](local.yml):
+| required | variable          | description                                  | default |
+| ---      | ---               | ---                                          | ---     |
+| no       | awx_release       | the fqdn to generate an acme certificate for | '4.0.0' |
+| no       | awx_pg_user       | the postgresql connection user               | 'awx'   |
+| *yes*    | awx_pg_pass       | the postgresql connection password           | n/a     |
+| no       | awx_admin_user    | the awx administrator user                   | 'admin' |
+| *yes*    | awx_admin_pass    | the awx administrator password               | n/a     |
+| no       | awx_rabbitmq_user | the awx administrator user                   | 'awx    |
+| *yes*    | awx_rabbitmq_pass | the awx administrator password               | n/a     |
+
+### [nginx.yml](nginx.yml):
 | required | variable | description | default |
 | --- | --- | --- | --- |
-| *yes* | acme_certificate_domain | the fqdn to generate an acme certificate for | ansible_fqdn |
+| *yes* | awx_url | the awx url | ansible_fqdn |
 | *yes* | acme_certificate_aws_accesskey_id | an ec2 key id with route53 management rights | lookup('env', 'AWS_ACCESS_KEY_ID') |
 | *yes* | acme_certificate_aws_accesskey_secret  | an ec2 key secret | lookup('env', 'AWS_SECRET_ACCESS_KEY') |
 
@@ -50,6 +62,25 @@ This role is tested automatically against the following distributions (docker im
   * Ubuntu Xenial
 
 You can test the role directly from sources using command ` molecule test `
+
+## TODO
+Add support for AWX settings; i.e:
+
+AUTH_LDAP_SERVER_URI: "ldap://ldap01.{{ awx_ldap_domain_0 }}:389 ldap://ldap02.{{ awx_ldap_domain_0 }}:389"
+AUTH_LDAP_USER_ATTR_MAP: "{'first_name': 'givenName', 'last_name': 'sn', 'email': 'mail'}"
+AUTH_LDAP_GROUP_TYPE: "ActiveDirectoryGroupType"
+AUTH_LDAP_GROUP_TYPE_PARAMS: "{}"
+AUTH_LDAP_GROUP_SEARCH: "['ou=Security Groups,{{ awx_ldap_domain_dn_0 }}', 'SCOPE_SUBTREE', '(objectClass=group)']"
+AUTH_LDAP_USER_SEARCH: "['ou=Accounts,{{ awx_ldap_domain_dn_0 }}', 'SCOPE_SUBTREE', '(sAMAccountName=%(user)s)']"
+AUTH_LDAP_USER_FLAGS_BY_GROUP: "{'is_superuser': 'cn=AWX Admins,ou=Security Groups,{{ awx_ldap_domain_dn_0 }}'}"
+AUTH_LDAP_REQUIRE_GROUP: "cn=AWX Users,ou=Security Groups,{{ awx_ldap_domain_dn_0 }}"
+AUTH_LDAP_BIND_DN: "{{ awx_ad_bind_user_0 }}"
+AUTH_LDAP_BIND_PASSWORD: "{{ awx_ad_bind_pass_0 }}"
+AUTH_LDAP_TEAM_MAP: "{'AWX Local Users': {'organization': '{{ awx_ldap_domain_0 }}', 'users': 'cn=AWX Users,ou=Security Groups,{{ awx_ldap_domain_dn_0 }}', 'remove': true }}"
+
+REMOTE_HOST_HEADERS: "[u'REMOTE_ADDR', u'REMOTE_HOST', u'HTTP_X_FORWARDED_FOR']"
+PROXY_IP_WHITELIST: "{{ bigip_query.self_ips | json_query(selfip_query) | map('split_with', '%') | map('first') | list | string }}"
+TOWER_URL_BASE: "{{ awx_url_local }}"
 
 ## License
 
