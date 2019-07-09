@@ -11,8 +11,8 @@
     acme_certificate_chainfile: "/etc/nginx/{{ acme_certificate_domain }}.chain.crt"
     acme_certificate_keyfile: "/etc/nginx/{{ acme_certificate_domain }}.key"
     acme_certificate_add_ca: yes
-    acme_certificate_aws_accesskey_id: "{{ aws_access_key_id }}"
-    acme_certificate_aws_accesskey_secret: "{{ aws_secret_access_key }}"
+    acme_certificate_aws_accesskey_id: "{{ aws_access_key_id | lookup('env', 'AWS_ACCESS_KEY_ID') }}"
+    acme_certificate_aws_accesskey_secret: "{{ aws_secret_access_key | lookup('env', 'AWS_SECRET_ACCESS_KEY') }}"
 
     nginx_install_from: os_repository
     nginx_cleanup_config_path:
