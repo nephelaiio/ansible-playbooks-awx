@@ -1,0 +1,94 @@
+---
+- name: build notification configuration options
+  set_fact:
+    name: "--name {{ notification.name | quote }}"
+    organization: "--organization {{ organization.name | quote }}"
+    notification_type: "--notification-type {{ notification.type | quote }}"
+    channels: "--channels {{ notification.channel | quote }}"
+    token: "{{ ('--token ' + notification.token | string | quote) if 'token' in notification else '' }}"
+  tags:
+    - notifications
+  no_log: "{{ awx_nolog }}"
+
+- name: build notification creation command
+  set_fact:
+    notification_create_args: "{{ name }} {{ notification_type }} {{ channels }} {{ organization }} {{ token }}"
+  tags:
+    - notifications
+  no_log: "{{ awx_nolog }}"
+
+- name: create notification
+  command: "awx-cli notification_template create {{ notification_create_args }} --force-on-exists"
+  changed_when: false
+  tags:
+    - notifications
+  no_log: "{{ awx_nolog }}"
+
+- name: set awx auth token
+  set_fact:
+    awx_authorization_token: "{{ awx_admin_user }}:{{ awx_admin_pass }}"
+  no_log: "{{ awx_nolog }}"
+
+- name: get awx job templates list
+  uri:
+    url: "{{ awx_url_local }}/api/v2/job_templates?page_size=100"
+    method: GET
+    headers:
+      Authorization: "Basic {{ awx_authorization_token | b64encode }}"
+    return_content: yes
+    status_code: 200
+    validate_certs: no
+    timeout: 15
+  register: awx_query_job_templates
+  delegate_to: localhost
+  no_log: "{{ awx_nolog }}"
+
+- name: get awx notification ID
+  uri:
+    url: "{{ awx_url_local }}/api/v2/notification_templates?search={{ notification.name }}"
+    method: GET
+    headers:
+      Authorization: "Basic {{ awx_authorization_token | b64encode }}"
+    return_content: yes
+    status_code: 200
+    validate_certs: no
+    timeout: 15
+  register: awx_query_notification_template
+  delegate_to: localhost
+  no_log: "{{ awx_nolog }}"
+
+- name: set job templates inventory and notification template ID
+  set_fact:
+    awx_job_templates_inventory: "{{ awx_query_job_templates.content | from_json }}"
+    awx_notification_template_id: "{{ awx_query_notification_template.json.results[0].id }}"
+  when:
+    - awx_query_job_templates is succeeded
+    - awx_query_notification_template is succeeded
+    - awx_query_notification_template.json.count == 1
+  register: awx_set_update_parameters
+  no_log: "{{ awx_nolog }}"
+
+- name: update job template to activate notifications
+  uri:
+    url: "{{ awx_url_local }}/api/v2/job_templates/{{ job_template_id }}/notification_templates_success"
+    method: POST
+    return_content: yes
+    status_code: 200
+    validate_certs: no
+    follow_redirects: yes
+    timeout: 15
+    headers:
+      Authorization: "Basic {{ awx_authorization_token | b64encode }}"
+    body_format: json
+    body:
+      id: "{{ awx_notification_template_id }}"
+  vars:
+    job_template_id: "{{ jobs_templates.id }}"
+  loop_control:
+    loop_var: jobs_templates
+    label: "{{ jobs_templates.name }}"
+  loop: "{{ awx_job_templates_inventory.results | list }}"
+  when:
+    - awx_set_update_parameters is succeeded
+  delegate_to: localhost
+  no_log: "{{ awx_nolog }}"

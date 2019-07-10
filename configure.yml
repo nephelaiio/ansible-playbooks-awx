@@ -51,6 +51,17 @@
             label: "{{ item.key }}"
           loop: "{{ awx_settings | dict2items }}"
 
+        - name: destroy awx notifications
+          include_tasks: config/notification_destroy.yml
+          vars:
+            organization: "{{ item.0 }}"
+            notification: "{{ item.1 }}"
+          loop_control:
+            label: "{{ notification.name }}"
+          loop: "{{ awx_organizations | subelements('notifications', skip_missing='yes') }}"
+          when: organization.state | default('present') == 'absent' or notification.state | default('present') == 'absent'
+          no_log: "{{ awx_nolog }}"
+
         - name: destroy awx job schedules
           include_tasks: config/schedule_destroy.yml
           vars:
@@ -246,5 +257,18 @@
           loop: "{{ awx_schedules }}"
           when: schedule.state | default('present') == 'present'
           no_log: "{{ awx_nolog }}"
+
+        - name: create awx notifications
+          include_tasks: config/notification_create.yml
+          vars:
+            organization: "{{ item.0 }}"
+            notification: "{{ item.1 }}"
+          loop_control:
+            label: "{{ notification.name }}"
+          loop: "{{ awx_organizations | subelements('notifications', skip_missing='yes') }}"
+          when: organization.state | default('present') == 'present' and notification.state | default('present') == 'present'
+          no_log: "{{ awx_nolog }}"
+          tags:
+            - notifications
 
       run_once: yes
