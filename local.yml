@@ -19,7 +19,7 @@
     awx_task_hostname: awx
     pg_username: "{{ awx_pg_user | default('awx') }}"
     pg_password: "{{ awx_pg_pass }}"
-    pg_database_default: "awx_{{ awx_dockerhub_version | regex_replace('\\.', '_') }}"
+    pg_database_default: "awx_{{ dockerhub_version | regex_replace('\\.', '_') }}"
     pg_database: "{{ awx_pg_db | default(pg_database_default) }}"
     pg_port: 5432
     postgres_data_dir: /opt/awx/data
