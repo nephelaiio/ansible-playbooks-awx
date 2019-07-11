@@ -68,7 +68,7 @@
             schedule: "{{ item }}"
           loop_control:
             label: "{{ schedule.name }}"
-          loop: "{{ awx_schedules }}"
+          loop: "{{ awx_schedules | default([]) }}"
           when: schedule.state | default('present') == 'absent'
           no_log: "{{ awx_nolog }}"
 
@@ -84,17 +84,12 @@
           no_log: "{{ awx_nolog }}"
 
         - name: destroy awx job templates
-          tower_job_template:
-            name: "{{ template.name }}"
-            playbook: "{{ template.playbook }}"
-            project: "{{ template.project }}"
-            job_type: "{{ template.job_type | default('run') }}"
-            state: absent
+          command: "awx-cli job_template delete -n {{ template.name | quote }}"
           vars:
             template: "{{ item }}"
           loop_control:
             label: "{{ template.name }}"
-          loop: "{{ awx_templates }}"
+          loop: "{{ awx_templates | default([]) }}"
           when: template.state | default('present') == 'absent'
           no_log: "{{ awx_nolog }}"
 
@@ -233,7 +228,7 @@
             template: "{{ item }}"
           loop_control:
             label: "{{ template.name }}"
-          loop: "{{ awx_templates }}"
+          loop: "{{ awx_templates | default([]) }}"
           when: template.state | default('present') == 'present'
           no_log: "{{ awx_nolog }}"
 
@@ -254,7 +249,7 @@
             schedule: "{{ item }}"
           loop_control:
             label: "{{ schedule.name }}"
-          loop: "{{ awx_schedules }}"
+          loop: "{{ awx_schedules | default([]) }}"
           when: schedule.state | default('present') == 'present'
           no_log: "{{ awx_nolog }}"
 
