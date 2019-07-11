@@ -26,6 +26,9 @@ The following parameters are available/required for playbook invocation
 | *yes* | acme_certificate_aws_accesskey_id | an ec2 key id with route53 management rights | lookup('env', 'AWS_ACCESS_KEY_ID') |
 | *yes* | acme_certificate_aws_accesskey_secret  | an ec2 key secret | lookup('env', 'AWS_SECRET_ACCESS_KEY') |
 
+### [configure.yml](configure.yml):
+| required | variable | description | default |
+
 ## Dependencies
 
 This playbook has the following git submodule dependencies:
