@@ -122,7 +122,7 @@
           tower_credential:
             organization: "{{ organization.name }}"
             name: "{{ credential.name }}"
-            kind: "{{ credential.type }}"
+            kind: "{{ credential.kind }}"
             state: absent
           vars:
             organization: "{{ item.0 }}"
