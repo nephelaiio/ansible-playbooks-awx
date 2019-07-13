@@ -92,6 +92,8 @@
           loop: "{{ awx_templates | default([]) }}"
           when: template.state | default('present') == 'absent'
           no_log: "{{ awx_nolog }}"
+          tags:
+            - templates
 
         - name: destroy awx inventories
           include_tasks: config/inventory_destroy.yml
@@ -122,7 +124,7 @@
           tower_credential:
             organization: "{{ organization.name }}"
             name: "{{ credential.name }}"
-            kind: "{{ credential.kind }}"
+            kind: "{{ credential.credential_kind }}"
             state: absent
           vars:
             organization: "{{ item.0 }}"
@@ -206,24 +208,7 @@
           no_log: "{{ awx_nolog }}"
 
         - name: create awx job templates
-          tower_job_template:
-            name: "{{ template.name }}"
-            playbook: "{{ template.playbook }}"
-            project: "{{ template.project }}"
-            job_type: "{{ template.job_type | default('run') }}"
-            credential: "{{ template.credential }}"
-            description: "{{ template.description | default(omit) }}"
-            diff_mode_enabled: "{{ template.diff_mode_enabled | default(omit) }}"
-            fact_caching_enabled: "{{ template.fact_caching_enabled | default(omit) }}"
-            force_handers_enabled: "{{ template.force_handers_enabled | default(omit) }}"
-            forks: "{{ template.forks | default(omit) }}"
-            host_config_key: "{{ template.host_config_key | default(omit) }}"
-            inventory: "{{ template.inventory | default(omit) }}"
-            job_tags: "{{ template.job_tags | default(omit) }}"
-            limit: "{{ template.limit | default(omit) }}"
-            skip_tags: "{{ template.skip_tags | default(omit) }}"
-            vault_credential: "{{ template.vault_credential | default(omit) }}"
-            verbosity: "{{ template.verbosity | default(omit) }}"
+          include_tasks: config/template_create.yml
           vars:
             template: "{{ item }}"
           loop_control:
@@ -231,6 +216,8 @@
           loop: "{{ awx_templates | default([]) }}"
           when: template.state | default('present') == 'present'
           no_log: "{{ awx_nolog }}"
+          tags:
+            - templates
 
         - name: create awx workflows
           include_tasks: config/workflow_create.yml

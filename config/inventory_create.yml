@@ -6,7 +6,6 @@
   set_fact:
     source_name: "-n {{ inventory.name | string | quote }}"
     description: "{{ ('--description ' + inventory.description | string | quote) if 'description' in inventory else '' }}"
-    credential: "{{ ('--credential ' + inventory.credential | string | quote) if 'credential' in inventory else '' }}"
     timeout: "{{ ('--timeout ' + (inventory.timeout | string | quote) ) if 'timeout' in inventory else '' }}"
     source: "--source {{ inventory.source | quote }}"
     source_inventory: "--inventory {{ inventory.name | quote }}"
@@ -24,7 +23,7 @@
 
 - name: build inventory creation command
   set_fact:
-    inventory_source_create_args: "{{ source_name }} {{ description }} {{ source }} {{ source_inventory }} {{ source_project }} {{ source_path }} {{ source_regions }} {{ source_script }} {{ timeout }} {{ instance_filters }} {{ group_by }} {{ overwrite }} {{ overwrite_vars }} {{ update_on_launch }} {{ update_cache_timeout }} {{ update_on_project_update }} {{ credential }}"
+    inventory_source_create_args: "{{ source_name }} {{ description }} {{ source }} {{ source_inventory }} {{ source_project }} {{ source_path }} {{ source_regions }} {{ source_script }} {{ timeout }} {{ instance_filters }} {{ group_by }} {{ overwrite }} {{ overwrite_vars }} {{ update_on_launch }} {{ update_cache_timeout }} {{ update_on_project_update }}"
 
 - name: create inventory source
   command: "awx-cli inventory_source create {{ inventory_source_create_args }}"

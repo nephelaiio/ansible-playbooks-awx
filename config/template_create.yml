@@ -1,0 +1,68 @@
+---
+- block:
+
+    - name: build template configuration options
+      set_fact:
+        name: "--name {{ template.name | quote }}"
+        description: "{{ ('--description ' + template.description | string | quote) if 'description' in template else '' }}"
+        job_type: "{{ ('--job-type ' + template.job_type | string | quote) if 'job_type' in template else '' }}"
+        inventory: "{{ ('--inventory ' + template.inventory | string | quote) if 'inventory' in template else '' }}"
+        project: "--project {{ template.project | quote }}"
+        playbook: "--playbook {{ template.playbook | quote }}"
+        forks: "{{ ('--forks ' + template.forks | string | quote) if 'forks' in template else '' }}"
+        limit: "{{ ('--limit ' + template.limit | string | quote) if 'limit' in template else '' }}"
+        verbosity: "{{ ('--verbosity ' + template.verbosity | string | quote) if 'verbosity' in template else '' }}"
+        timeout: "{{ ('--timeout ' + (template.timeout | string | quote) ) if 'timeout' in template else '' }}"
+
+    - name: build template creation command
+      set_fact:
+        template_create_args: "{{ name }} {{ description }} {{ job_type }} {{ inventory }} {{ project }} {{ playbook }} {{ forks }} {{ limit }} {{ verbosity }} {{ timeout }} --format=json"
+
+    - name: create job template
+      command: "awx-cli job_template create {{ template_create_args }} --force-on-exists"
+      register: awx_template_result
+
+    - name: register template object
+      set_fact:
+        template_object: "{{ awx_template_result.stdout | from_json }}"
+
+    - name: query credential types
+      uri:
+        url: "{{ awx_url }}/api/v2/credential_types/"
+        method: GET
+        body_format: json
+        user: "{{ awx_admin_user | default('admin') }}"
+        password: "{{ awx_admin_pass }}"
+        force_basic_auth: yes
+        status_code: 200
+      register: credential_type_query
+
+    - name: set credential type dict
+      set_fact:
+        awx_credential_dict: "{{ (awx_credential_dict | default({})) | combine({ credential.kind: credential.id }) }}"
+      loop_control:
+        loop_var: credential
+        label: "{{ credential.kind }}"
+      loop: "{{ credential_type_query.json.results | list | flatten(levels=1) }}"
+
+    - name: add template credentials
+      uri:
+        url: "{{ awx_url }}/api/v2/job_templates/{{ template_object.id }}/credentials/"
+        method: POST
+        body_format: json
+        body:
+          name: "{{ credential.name }}"
+          credential_type: "{{ awx_credential_dict[credential.kind] }}"
+        user: "{{ awx_admin_user | default('admin') }}"
+        password: "{{ awx_admin_pass }}"
+        force_basic_auth: yes
+        status_code: 201
+      loop_control:
+        loop_var: credential
+        label: "{{ credential.name }}"
+      loop: "{{ template.credentials | default([]) }}"
+      when: 
+        - not credential.name in (template_object.summary_fields.credentials | map(attribute='name'))
+
+  tags:
+    - templates

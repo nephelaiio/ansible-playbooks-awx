@@ -11,7 +11,7 @@ The following parameters are available/required for playbook invocation
 ### [local.yml](local.yml):
 | required | variable          | description                                  | default |
 | ---      | ---               | ---                                          | ---     |
-| no       | awx_release       | the fqdn to generate an acme certificate for | '4.0.0' |
+| no       | awx_release       | the fqdn to generate an acme certificate for | '6.0.0' |
 | no       | awx_pg_user       | the postgresql connection user               | 'awx'   |
 | *yes*    | awx_pg_pass       | the postgresql connection password           | n/a     |
 | no       | awx_admin_user    | the awx administrator user                   | 'admin' |
