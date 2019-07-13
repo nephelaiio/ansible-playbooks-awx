@@ -10,6 +10,9 @@
     awx_cli_conf: ~/.tower_cli.cfg
     awx_settings: {}
     awx_nolog: yes
+    tower_host: "{{ awx_url | urlsplit('hostname') }}"
+    tower_username: "{{ awx_admin_user | default('admin') }}"
+    tower_password: "{{ awx_admin_pass }}"
 
   roles:
 
@@ -35,9 +38,9 @@
         dest: "{{ awx_cli_conf }}"
         mode: 0600
       vars:
-        host: "{{ awx_url | urlsplit('hostname') }}"
-        username: "{{ awx_admin_user | default('admin') }}"
-        password: "{{ awx_admin_pass }}"
+        host: "{{ tower_host }}"
+        username: "{{ tower_username }}"
+        password: "{{ tower_password }}"
         verify_ssl: false
         verbose: false
 
@@ -176,6 +179,9 @@
             username: "{{ credential.username | default(omit) }}"
             vault_id: "{{ credential.vault_id | default(omit) }}"
             vault_password: "{{ credential.vault_password | default(omit) }}"
+            tower_host: "{{ tower_host }}"
+            tower_username: "{{ tower_username }}"
+            tower_password: "{{ tower_password }}"
           vars:
             organization: "{{ item.0 }}"
             credential: "{{ item.1 }}"
@@ -186,7 +192,24 @@
           no_log: "{{ awx_nolog }}"
 
         - name: create awx projects
-          include_tasks: config/project_create.yml
+          tower_project:
+            organization: "{{ organization.name }}"
+            name: "{{ project.name }}"
+            description: "{{ project.description }}"
+            scm_type: "{{ project.scm_type | default(omit) }}"
+            scm_url: "{{ project.scm_url | default(omit) }}"
+            scm_branch: "{{ project.scm_branch | default(omit) }}"
+            scm_credential: "{{ project.scm_credential | default(omit) }}"
+            scm_clean: "{{ project.scm_clean | default(omit) }}"
+            scm_delete_on_update: "{{ project.delete_on_update | default(omit) }}"
+            scm_update_on_launch: "{{ project.scm_update_on_launch | default(omit) }}"
+            scm_update_cache_timeout: "{{ project.scm_update_cache_timeout | default(omit) }}"
+            scm_job_timeout: "{{ project.scm_job_timeout | default(omit) }}"
+            custom_virtualenv: "{{ project.custom_virtualenv | default(omit) }}"
+            state: present
+            tower_host: "{{ tower_host }}"
+            tower_username: "{{ tower_username }}"
+            tower_password: "{{ tower_password }}"
           vars:
             organization: "{{ item.0 }}"
             project: "{{ item.1 }}"
