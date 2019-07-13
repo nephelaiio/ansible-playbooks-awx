@@ -10,3 +10,9 @@ install:
 script:
   - yamllint ./ -c ./.yamllint
   - flake8 ./
+  - sudo apt install jq
+  - ./bin/awx_update_project.sh --url $AWX_URL --user $AWX_USER --pass $AWX_PASS --repo https://github.com/$TRAVIS_REPO_SLUG.git
+
+branches:
+  only:
+    - master
