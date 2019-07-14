@@ -36,4 +36,14 @@
     - nephelaiio.plugins
     - nephelaiio.pip
     - nephelaiio.docker
-    - local_docker
+
+  tasks:
+
+    - name: clean secret compose dir
+      file:
+        path: "{{ docker_compose_dir }}"
+        state: absent
+
+    - name: install awx
+      import_role:
+        name: local_docker
