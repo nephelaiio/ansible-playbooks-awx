@@ -1,7 +1,11 @@
 extends: default
 
 ignore: |
+  galaxy/
+  resources/
   submodules/
+  **/vault.yml
+  **/vault/
 
 rules:
   braces:
@@ -10,3 +14,5 @@ rules:
   brackets:
     max-spaces-inside: 1
     level: error
+  line-length: disable
+  truthy: disable
