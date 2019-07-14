@@ -80,10 +80,16 @@
 
   tasks:
 
+    - name: gather facts from upstream servers
+      setup:
+      delegate_to: "{{ item }}"
+      delegate_facts: yes
+      loop: "{{ groups['awx_app'] | list }}"
+
     - name: build list of upstream servers
       set_fact:
         awx_app_servers: "{{ (awx_app_servers | default({})) | combine ({ item: awx_item_server}) }}"
-      loop: "{{ groups['awx_app'] | list }}"
+      loop: "{{ groups['awx_app'] | map('extract', hostvars, ['ansible_default_ipv4', 'address']) | list }}"
       vars:
         awx_item_server:
           address: "{{ item }}"
