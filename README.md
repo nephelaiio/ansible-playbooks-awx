@@ -175,25 +175,6 @@ This role is tested automatically against the following distributions (docker im
 
 You can test the role directly from sources using command ` molecule test `
 
-## TODO
-Add support for AWX settings; i.e:
-
-AUTH_LDAP_SERVER_URI: "ldap://ldap01.{{ awx_ldap_domain_0 }}:389 ldap://ldap02.{{ awx_ldap_domain_0 }}:389"
-AUTH_LDAP_USER_ATTR_MAP: "{'first_name': 'givenName', 'last_name': 'sn', 'email': 'mail'}"
-AUTH_LDAP_GROUP_TYPE: "ActiveDirectoryGroupType"
-AUTH_LDAP_GROUP_TYPE_PARAMS: "{}"
-AUTH_LDAP_GROUP_SEARCH: "['ou=Security Groups,{{ awx_ldap_domain_dn_0 }}', 'SCOPE_SUBTREE', '(objectClass=group)']"
-AUTH_LDAP_USER_SEARCH: "['ou=Accounts,{{ awx_ldap_domain_dn_0 }}', 'SCOPE_SUBTREE', '(sAMAccountName=%(user)s)']"
-AUTH_LDAP_USER_FLAGS_BY_GROUP: "{'is_superuser': 'cn=AWX Admins,ou=Security Groups,{{ awx_ldap_domain_dn_0 }}'}"
-AUTH_LDAP_REQUIRE_GROUP: "cn=AWX Users,ou=Security Groups,{{ awx_ldap_domain_dn_0 }}"
-AUTH_LDAP_BIND_DN: "{{ awx_ad_bind_user_0 }}"
-AUTH_LDAP_BIND_PASSWORD: "{{ awx_ad_bind_pass_0 }}"
-AUTH_LDAP_TEAM_MAP: "{'AWX Local Users': {'organization': '{{ awx_ldap_domain_0 }}', 'users': 'cn=AWX Users,ou=Security Groups,{{ awx_ldap_domain_dn_0 }}', 'remove': true }}"
-
-REMOTE_HOST_HEADERS: "[u'REMOTE_ADDR', u'REMOTE_HOST', u'HTTP_X_FORWARDED_FOR']"
-PROXY_IP_WHITELIST: "{{ bigip_query.self_ips | json_query(selfip_query) | map('split_with', '%') | map('first') | list | string }}"
-TOWER_URL_BASE: "{{ awx_url_local }}"
-
 ## License
 
 This project is licensed under the terms of the [MIT License](/LICENSE)
