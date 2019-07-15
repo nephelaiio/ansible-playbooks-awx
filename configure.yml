@@ -68,7 +68,7 @@
             schedule: "{{ item }}"
           loop_control:
             label: "{{ schedule.name }}"
-          loop: "{{ awx_schedules | default([]) }}"
+          loop: "{{ (awx_schedules | default([])) | list }}"
           when: schedule.state | default('present') == 'absent'
           no_log: "{{ awx_nolog }}"
 
@@ -89,7 +89,7 @@
             template: "{{ item }}"
           loop_control:
             label: "{{ template.name }}"
-          loop: "{{ awx_templates | default([]) }}"
+          loop: "{{ (awx_templates | default([])) | list }}"
           when: template.state | default('present') == 'absent'
           no_log: "{{ awx_nolog }}"
           tags:
@@ -213,7 +213,7 @@
             template: "{{ item }}"
           loop_control:
             label: "{{ template.name }}"
-          loop: "{{ awx_templates | default([]) }}"
+          loop: "{{ (awx_templates | default([])) | list }}"
           when: template.state | default('present') == 'present'
           no_log: "{{ awx_nolog }}"
           tags:
@@ -236,7 +236,7 @@
             schedule: "{{ item }}"
           loop_control:
             label: "{{ schedule.name }}"
-          loop: "{{ awx_schedules | default([]) }}"
+          loop: "{{ (awx_schedules | default([])) | list }}"
           when: schedule.state | default('present') == 'present'
           no_log: "{{ awx_nolog }}"
 
@@ -252,5 +252,17 @@
           no_log: "{{ awx_nolog }}"
           tags:
             - notifications
+
+        - name: create awx users
+          tower_users:
+            username: "{{ item.username }}"
+            password: "{{ item.password }}"
+            first_name: "{{ item.first_name | default(omit) }}"
+            last_name: "{{ item.last_name | default(omit) }}"
+            superuser: "{{ item.superuser | default(omit) }}"
+            state: "{{ item.state | default('present') }}"
+          loop_control:
+            label: "{{ item.username }}"
+          loop: "{{ awx_users | default([]) | list }}"
 
       run_once: yes

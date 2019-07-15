@@ -9,25 +9,134 @@ A set of [ansible playbooks](https://galaxy.ansible.com/nephelaiio/ansible-playb
 The following parameters are available/required for playbook invocation
 
 ### [local.yml](local.yml):
-| required | variable          | description                                  | default |
-| ---      | ---               | ---                                          | ---     |
-| no       | awx_release       | the fqdn to generate an acme certificate for | '6.0.0' |
-| no       | awx_pg_user       | the postgresql connection user               | 'awx'   |
-| *yes*    | awx_pg_pass       | the postgresql connection password           | n/a     |
-| no       | awx_admin_user    | the awx administrator user                   | 'admin' |
-| *yes*    | awx_admin_pass    | the awx administrator password               | n/a     |
-| no       | awx_rabbitmq_user | the awx administrator user                   | 'awx    |
-| *yes*    | awx_rabbitmq_pass | the awx administrator password               | n/a     |
+| required | variable          | description                              | default |
+| ---      | ---               | ---                                      | ---     |
+| no       | awx_release       | fqdn to generate an acme certificate for | '6.0.0' |
+| no       | awx_pg_user       | postgresql connection user               | 'awx'   |
+| *yes*    | awx_pg_pass       | postgresql connection password           | n/a     |
+| no       | awx_admin_user    | awx administrator user                   | 'admin' |
+| *yes*    | awx_admin_pass    | awx administrator password               | n/a     |
+| no       | awx_rabbitmq_user | awx administrator user                   | 'awx    |
+| *yes*    | awx_rabbitmq_pass | awx administrator password               | n/a     |
 
 ### [nginx.yml](nginx.yml):
-| required | variable | description | default |
-| --- | --- | --- | --- |
-| *yes* | awx_url | the awx url | ansible_fqdn |
-| *yes* | acme_certificate_aws_accesskey_id | an ec2 key id with route53 management rights | lookup('env', 'AWS_ACCESS_KEY_ID') |
-| *yes* | acme_certificate_aws_accesskey_secret  | an ec2 key secret | lookup('env', 'AWS_SECRET_ACCESS_KEY') |
+| required | variable                              | description                                  | default                                |
+| ---      | ---                                   | ---                                          | ---                                    |
+| *yes*    | awx_url                               | target awx url                               | n/a                                    |
+| *yes*    | acme_certificate_email                | awx url                                      | n/a                                    |
+| *yes*    | acme_certificate_aws_accesskey_id     | an ec2 key id with route53 management rights | lookup('env', 'AWS_ACCESS_KEY_ID')     |
+| *yes*    | acme_certificate_aws_accesskey_secret | an ec2 key secret                            | lookup('env', 'AWS_SECRET_ACCESS_KEY') |
 
 ### [configure.yml](configure.yml):
-| required | variable | description | default |
+| required | variable      | description                                  | default |
+| *yes*    | awx_url       | target awx url                               | n/a     |
+| *no*     | awx_users     | [list of awx users](#Users)                  | []      |
+| *no*     | awx_schedules | [list of awx template schedules](#Schedules) | []      |
+| *no*     | awx_templates | [list of awx template](#Templates)           | []      |
+| *no*     | awx_organizations | [list of awx template](#Organizations) | []      |
+
+## Data Formats
+
+### Users
+```{yaml}
+awx_users:
+  - first_name: First Name
+    last_name: Last Name
+    username: "{{ user_name }}"
+    password: "{{ user_pass }}"
+    superuser: yes
+```
+
+### Templates
+```{yaml}
+awx_templates:
+  - name: ping
+    state: absent
+    job_type: run
+    project: awx
+    inventory: awx
+    playbook: ping.yml
+    credentials:
+      - name: awx.ssh
+        kind: ssh
+```
+
+### Schedules
+```{yaml}
+awx_schedules:
+  - name: ping.daily
+    job_template: ping
+    enabled: true
+    rrule: "DTSTART:20190705T002000Z RRULE:FREQ=DAILY;INTERVAL=1"
+  - name: ping.fortnight
+    job_template: ping
+    enabled: true
+    rrule: "DTSTART:20190705T002000Z RRULE:FREQ=WEEKLY;INTERVAL=2"
+  - name: ping.monthly
+    job_template: ping
+    enabled: true
+    rrule: "DTSTART:20190705T002000Z RRULE:FREQ=MONTHLY;INTERVAL=1"
+```
+
+### Organizations
+```{yaml}
+awx_organizations:
+
+  - name: Demo Organization
+    state: absent
+
+  - name: nephelai.io
+    state: present
+
+    credentials:
+      - name: awx.github
+        kind: scm
+        username: "{{ awx_github_user }}"
+        password: "{{ awx_github_pass }}"
+      - name: awx.vault
+        kind: vault
+        vault_password: "{{ awx_vault_awx_pass }}"
+      - name: awx.ssh
+        kind: ssh
+        username: "{{ awx_machine_user }}"
+        ssh_key_data: "{{ awx_machine_key }}"
+
+    projects:
+      - name: Demo Project
+        state: absent
+      - name: awx
+        scm_type: git
+        scm_url: https://github.com/nephelaiio/ansible-playbook-awx.git
+        scm_branch: master
+        scm_delete_on_update: false
+        scm_credential: awx.github
+        scm_update_on_launch: false
+        scm_update_cache_timeout: 60
+        scm_clean: false
+      - name: inventory
+        scm_type: git
+        scm_url: https://github.com/nephelaiio/ansible-playbooks.git
+        scm_branch: master
+        scm_delete_on_update: false
+        scm_credential: awx.github
+        scm_update_on_launch: false
+        scm_update_cache_timeout: 60
+        scm_clean: false
+
+    inventories:
+      - name: Demo Inventory
+        state: absent
+      - name: awx
+        source: scm
+        source_project: inventory
+        source_path: inventory/awx
+        overwrite: true
+        overwrite_vars: true
+        update_on_launch: false
+        update_on_project_update: true
+
+    workflows: []
+```
 
 ## Dependencies
 
