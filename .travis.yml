@@ -10,7 +10,8 @@ install:
 script:
   - yamllint ./ -c ./.yamllint
   - flake8 ./
-  - ./bin/awx_update_project.sh --url $AWX_URL --user $AWX_USER --pass $AWX_PASS --repo https://github.com/$TRAVIS_REPO_SLUG.git
+  - ./bin/awx_update_projects.sh --url $AWX_URL --user $AWX_USER --pass $AWX_PASS --repo https://github.com/$TRAVIS_REPO_SLUG.git
+  - ./bin/awx_run_templates.sh --url $AWX_URL --user $AWX_USER --pass $AWX_PASS --repo https://github.com/$TRAVIS_REPO_SLUG.git
 
 branches:
   only:
