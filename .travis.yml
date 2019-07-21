@@ -3,9 +3,9 @@ language: python
 
 sudo: required
 
-install:
-  - sudo pip install yamllint
-  - sudo pip install flake8
+before_install:
+  - sudo apt install -y git jq
+  - sudo pip install -r requirements.txt
 
 script:
   - yamllint ./ -c ./.yamllint
