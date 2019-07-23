@@ -3,6 +3,10 @@ language: python
 
 sudo: required
 
+dist: xenial
+
+python: "3.7"
+
 before_install:
   - sudo apt install -y git jq
   - sudo pip install -r requirements.txt
