@@ -62,7 +62,6 @@ do
         --debug)
             DEBUG=${TRUE}
             shift # past argument
-            shift # past value
             ;;
         *)    # unknown option
             POSITIONAL+=("$1") # save it in an array for later
@@ -129,9 +128,11 @@ else
             PRJ_TPL_LIST=$(tower-cli job_template list --project ${PRJ_NAME} --playbook ${PLAYBOOK} | jq -cr '.results[].name')
 
             for TPL_NAME in ${PRJ_TPL_LIST}; do
+
                 FOUND=${TRUE}
                 echo running job for template ${TPL_NAME}
                 TPL_RUN=$(tower-cli job launch --job-template ${TPL_NAME} --wait)
+
             done
 
         done

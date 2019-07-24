@@ -60,7 +60,6 @@ do
         --debug)
             DEBUG=${TRUE}
             shift # past argument
-            shift # past value
             ;;
         *)    # unknown option
             POSITIONAL+=("$1") # save it in an array for later
@@ -120,9 +119,11 @@ else
         PRJ_UPDATE=$(tower-cli project update -n ${PRJ_NAME} --organization ${PRJ_ORG} --wait)
 
         if [ $? -ne 0 ]; then
+
             echo "unable to update project ${PRJ_ID}"
             echo "${PRJ_UPDATE}"
             exit ${ERROR}
+
         fi
 
     done
