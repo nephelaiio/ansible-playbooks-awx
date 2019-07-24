@@ -111,38 +111,46 @@ tower-cli config format json 2>&1 >/dev/null
 # retrieve awx project ids
 PRJ_NAMES=$(tower-cli project list --scm-url ${REPO} --scm-branch ${BRANCH} | jq -cr '.results[].name')
 
-if [ -z ${PLAYS} ]; then
+if [ $? -ne 0 ]; then
 
-    echo "no playbooks requested and no playbook changes found in last commit"
+    exit ${ERROR}
 
 else
 
-    for PRJ_NAME in ${PRJ_NAMES}; do
+    if [ -z ${PLAYS} ]; then
 
-        debug testing project ${PRJ_NAME}
+        echo "no playbooks requested and no playbook changes found in last commit"
 
-        for PLAYBOOK in ${PLAYS}; do
+    else
 
-            debug testing playbook ${PLAYBOOK}
+        for PRJ_NAME in ${PRJ_NAMES}; do
 
-            PRJ_TPL_LIST=$(tower-cli job_template list --project ${PRJ_NAME} --playbook ${PLAYBOOK} | jq -cr '.results[].name')
+            debug testing project ${PRJ_NAME}
 
-            for TPL_NAME in ${PRJ_TPL_LIST}; do
+            for PLAYBOOK in ${PLAYS}; do
 
-                FOUND=${TRUE}
-                echo running job for template ${TPL_NAME}
-                TPL_RUN=$(tower-cli job launch --job-template ${TPL_NAME} --wait)
+                debug testing playbook ${PLAYBOOK}
+
+                PRJ_TPL_LIST=$(tower-cli job_template list --project ${PRJ_NAME} --playbook ${PLAYBOOK} | jq -cr '.results[].name')
+
+                for TPL_NAME in ${PRJ_TPL_LIST}; do
+
+                    FOUND=${TRUE}
+                    echo running job for template ${TPL_NAME}
+                    TPL_RUN=$(tower-cli job launch --job-template ${TPL_NAME} --wait)
+
+                done
 
             done
 
         done
 
-    done
+        if [ ${FOUND} -eq ${FALSE} ]; then
+            echo "no templates found for playbooks ${PLAYS}"
+        fi
 
-    if [ ${FOUND} -eq ${FALSE} ]; then
-        echo "no templates found for playbooks ${PLAYS}"
     fi
 
-fi
+    exit ${SUCCESS}
 
-exit ${SUCCESS}
+fi
