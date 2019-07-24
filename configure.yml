@@ -264,5 +264,6 @@
           loop_control:
             label: "{{ item.username }}"
           loop: "{{ awx_users | default([]) | list }}"
+          no_log: "{{ awx_nolog }}"
 
       run_once: yes
