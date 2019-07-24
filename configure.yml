@@ -254,7 +254,7 @@
             - notifications
 
         - name: create awx users
-          tower_users:
+          tower_user:
             username: "{{ item.username }}"
             password: "{{ item.password }}"
             first_name: "{{ item.first_name | default(omit) }}"
