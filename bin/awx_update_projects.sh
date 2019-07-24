@@ -101,13 +101,15 @@ tower-cli config password ${_PASS} 2>&1 >/dev/null
 tower-cli config format json 2>&1 >/dev/null
 
 # retrieve awx project ids
-PRJS=$(tower-cli project list --scm-url ${REPO} --scm-branch ${BRANCH} | jq -cr '.results[] | {name,organization}')
+PRJ_JSON=$(tower-cli project list --scm-url ${REPO} --scm-branch ${BRANCH})
 
 if [ $? -ne 0 ]; then
 
     exit ${ERROR}
 
 else
+
+    PRJS=$(echo $PRJ_JSON | jq -cr '.results[] | {name,organization}')
 
     if [ -z ${PRJS} ]; then
 

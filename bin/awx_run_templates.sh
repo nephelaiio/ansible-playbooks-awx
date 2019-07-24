@@ -109,19 +109,21 @@ tower-cli config password ${_PASS} 2>&1 >/dev/null
 tower-cli config format json 2>&1 >/dev/null
 
 # retrieve awx project ids
-PRJ_NAMES=$(tower-cli project list --scm-url ${REPO} --scm-branch ${BRANCH} | jq -cr '.results[].name')
+if [ -z ${PLAYS} ]; then
 
-if [ $? -ne 0 ]; then
-
-    exit ${ERROR}
+    echo "no playbooks requested and no playbook changes found in last commit"
 
 else
 
-    if [ -z ${PLAYS} ]; then
+    PRJ_JSON=$(tower-cli project list --scm-url ${REPO} --scm-branch ${BRANCH})
 
-        echo "no playbooks requested and no playbook changes found in last commit"
+    if [ $? -ne 0 ]; then
+
+        exit ${ERROR}
 
     else
+
+        PRJ_NAMES=$(echo "$PRJ_JSON" | jq -cr '.results[].name')
 
         for PRJ_NAME in ${PRJ_NAMES}; do
 
