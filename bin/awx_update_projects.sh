@@ -103,31 +103,39 @@ tower-cli config format json 2>&1 >/dev/null
 # retrieve awx project ids
 PRJS=$(tower-cli project list --scm-url ${REPO} --scm-branch ${BRANCH} | jq -cr '.results[] | {name,organization}')
 
-if [ -z ${PRJS} ]; then
+if [ $? -ne 0 ]; then
 
-    echo "no projects found for repository ${REPO}"
+    exit ${ERROR}
 
 else
 
-    for PRJ in ${PRJS}; do
+    if [ -z ${PRJS} ]; then
 
-        debug testing project ${PRJ_NAME}
+        echo "no projects found for repository ${REPO}"
 
-        PRJ_NAME=$(echo $PRJ | jq -r '.name')
-        PRJ_ORG=$(echo $PRJ | jq -r '.organization')
-        echo "updating project ${PRJ_NAME}"
-        PRJ_UPDATE=$(tower-cli project update -n ${PRJ_NAME} --organization ${PRJ_ORG} --wait)
+    else
 
-        if [ $? -ne 0 ]; then
+        for PRJ in ${PRJS}; do
 
-            echo "unable to update project ${PRJ_ID}"
-            echo "${PRJ_UPDATE}"
-            exit ${ERROR}
+            debug testing project ${PRJ_NAME}
 
-        fi
+            PRJ_NAME=$(echo $PRJ | jq -r '.name')
+            PRJ_ORG=$(echo $PRJ | jq -r '.organization')
+            echo "updating project ${PRJ_NAME}"
+            PRJ_UPDATE=$(tower-cli project update -n ${PRJ_NAME} --organization ${PRJ_ORG} --wait)
 
-    done
+            if [ $? -ne 0 ]; then
+
+                echo "unable to update project ${PRJ_ID}"
+                echo "${PRJ_UPDATE}"
+                exit ${ERROR}
+
+            fi
+
+        done
+
+    fi
+
+    exit ${SUCCESS}
 
 fi
-
-exit ${SUCCESS}
