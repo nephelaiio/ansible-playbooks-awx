@@ -141,6 +141,13 @@ else
                     echo running job for template ${TPL_NAME}
                     TPL_RUN=$(tower-cli job launch --job-template ${TPL_NAME} --wait)
 
+                    if [ $? -ne 0 ]; then
+
+                        echo "${TPL_RUN}"
+                        exit ${ERROR}
+
+                    fi
+
                 done
 
             done
