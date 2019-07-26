@@ -11,11 +11,21 @@ install:
   - sudo apt install -y git jq
   - sudo pip install -r requirements.txt
 
-script:
-  - yamllint ./ -c ./.yamllint
-  - flake8 ./
-  - ./bin/awx_update_projects.sh --host $AWX_URL --user $AWX_USER --pass $AWX_PASS --repo https://github.com/$TRAVIS_REPO_SLUG.git --debug
-  - ./bin/awx_run_templates.sh --host $AWX_URL --user $AWX_USER --pass $AWX_PASS --repo https://github.com/$TRAVIS_REPO_SLUG.git --debug
+stages:
+  - test
+  - deploy
+
+jobs:
+  include:
+    - script:
+        - yamllint ./ -c ./.yamllint
+        - flake8 ./
+      stage: test
+    - script:
+        - ./bin/awx_update_projects.sh --host $AWX_URL --user $AWX_USER --pass $AWX_PASS --repo https://github.com/$TRAVIS_REPO_SLUG.git --debug
+        - ./bin/awx_run_templates.sh --host $AWX_URL --user $AWX_USER --pass $AWX_PASS --repo https://github.com/$TRAVIS_REPO_SLUG.git --debug
+      stage:
+        deploy
 
 branches:
   only:
