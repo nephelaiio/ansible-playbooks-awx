@@ -6,7 +6,7 @@
         name: "--name {{ template.name | quote }}"
         description: "{{ ('--description ' + template.description | string | quote) if 'description' in template else '' }}"
         job_type: "{{ ('--job-type ' + template.job_type | string | quote) if 'job_type' in template else '' }}"
-        inventory: "{{ ('--inventory ' + template.inventory | string | quote) if 'inventory' in template else '' }}"
+        inventory: "{{ ('--inventory ' + template.inventory | string | quote) if 'inventory' in template else '--ask-inventory-on-launch true' }}"
         project: "--project {{ template.project | quote }}"
         playbook: "--playbook {{ template.playbook | quote }}"
         forks: "{{ ('--forks ' + template.forks | string | quote) if 'forks' in template else '' }}"
