@@ -42,6 +42,44 @@
 
     - block:
 
+        - name: query credential types
+          uri:
+            url: "{{ awx_url }}/api/v2/credential_types/"
+            method: GET
+            body_format: json
+            user: "{{ awx_admin_user | default('admin') }}"
+            password: "{{ awx_admin_pass }}"
+            force_basic_auth: yes
+            status_code: 200
+          register: credential_type_query
+
+        - name: set credential type dict
+          set_fact:
+            awx_credential_type_dict: "{{ (awx_credential_type_dict | default({})) | combine({ credential_type.kind: credential_type.id }) }}"
+          loop_control:
+            loop_var: credential_type
+            label: "{{ credential_type.kind }}"
+          loop: "{{ credential_type_query.json.results | list | flatten(levels=1) }}"
+
+        - name: query credentials
+          uri:
+            url: "{{ awx_url }}/api/v2/credentials/"
+            method: GET
+            body_format: json
+            user: "{{ awx_admin_user | default('admin') }}"
+            password: "{{ awx_admin_pass }}"
+            force_basic_auth: yes
+            status_code: 200
+          register: credential_query
+
+        - name: set credential dict
+          set_fact:
+            awx_credential_dict: "{{ (awx_credential_dict | default({})) | combine({ credential.name: credential.id }) }}"
+          loop_control:
+            loop_var: credential
+            label: "{{ credential.kind }}"
+          loop: "{{ credential_query.json.results | list | flatten(levels=1) }}"
+
         - name: manage awx settings
           tower_settings:
             name: "{{ item.key }}"
