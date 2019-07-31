@@ -2,7 +2,7 @@
 - name: build notification configuration options
   set_fact:
     name: "--name {{ notification.name | quote }}"
-    organization: "--organization {{ organization.name | quote }}"
+    _organization: "--organization {{ organization.name | quote }}"
     notification_type: "--notification-type {{ notification.type | quote }}"
     channels: "--channels {{ notification.channel | quote }}"
     token: "{{ ('--token ' + notification.token | string | quote) if 'token' in notification else '' }}"
@@ -12,7 +12,7 @@
 
 - name: build notification creation command
   set_fact:
-    notification_create_args: "{{ name }} {{ notification_type }} {{ channels }} {{ organization }} {{ token }}"
+    notification_create_args: "{{ name }} {{ notification_type }} {{ channels }} {{ _organization }} {{ token }}"
   tags:
     - notifications
   no_log: "{{ awx_nolog }}"
@@ -28,6 +28,8 @@
   set_fact:
     awx_authorization_token: "{{ awx_admin_user }}:{{ awx_admin_pass }}"
   no_log: "{{ awx_nolog }}"
+  tags:
+    - notifications
 
 - name: get awx job templates list
   uri:
@@ -42,6 +44,8 @@
   register: awx_query_job_templates
   delegate_to: localhost
   no_log: "{{ awx_nolog }}"
+  tags:
+    - notifications
 
 - name: get awx notification ID
   uri:
@@ -56,6 +60,8 @@
   register: awx_query_notification_template
   delegate_to: localhost
   no_log: "{{ awx_nolog }}"
+  tags:
+    - notifications
 
 - name: set job templates inventory and notification template ID
   set_fact:
@@ -67,6 +73,8 @@
     - awx_query_notification_template.json.count == 1
   register: awx_set_update_parameters
   no_log: "{{ awx_nolog }}"
+  tags:
+    - notifications
 
 - name: update job template to activate notifications
   uri:
@@ -92,3 +100,5 @@
     - awx_set_update_parameters is succeeded
   delegate_to: localhost
   no_log: "{{ awx_nolog }}"
+  tags:
+    - notifications

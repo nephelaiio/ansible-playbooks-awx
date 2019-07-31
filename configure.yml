@@ -8,7 +8,6 @@
   vars:
 
     awx_cli_conf: ~/.tower_cli.cfg
-    awx_settings: {}
     awx_nolog: yes
 
   roles:
@@ -49,7 +48,7 @@
             value: "{{ item.value }}"
           loop_control:
             label: "{{ item.key }}"
-          loop: "{{ awx_settings | dict2items }}"
+          loop: "{{ (awx_settings | default({})) | dict2items }}"
 
         - name: destroy awx notifications
           include_tasks: config/notification_destroy.yml
@@ -124,7 +123,7 @@
           tower_credential:
             organization: "{{ organization.name }}"
             name: "{{ credential.name }}"
-            kind: "{{ credential.credential_kind }}"
+            kind: "{{ credential.kind }}"
             state: absent
           vars:
             organization: "{{ item.0 }}"
@@ -134,6 +133,7 @@
           loop: "{{ awx_organizations | subelements('credentials', skip_missing='yes') }}"
           when: organization.state | default('present') == 'absent' or credential.state | default('present') == 'absent'
           no_log: "{{ awx_nolog }}"
+          ignore_errors: yes
 
         - name: destroy awx organizations
           tower_organization:
