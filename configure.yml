@@ -79,7 +79,6 @@
           loop_control:
             label: "{{ workflow.name }}"
           loop: "{{ awx_organizations | subelements('workflows', skip_missing='yes') }}"
-          when: organization.state | default('present') == 'absent' or workflow.state | default('present') == 'absent'
           no_log: "{{ awx_nolog }}"
 
         - name: destroy awx job templates
