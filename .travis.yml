@@ -10,6 +10,10 @@ python: "3.7"
 install:
   - sudo apt install -y git jq
   - pip install -r https://raw.githubusercontent.com/nephelaiio/ansible-role-requirements/master/requirements.txt
+  - git clone https://github.com/basherpm/basher.git ~/.basher
+  - export PATH="$HOME/.basher/bin:$PATH"
+  - eval "$(basher init -)"
+  - basher install nephelaiio/basher-awx
 
 stages:
   - test
@@ -22,8 +26,8 @@ jobs:
         - flake8 ./
       stage: test
     - script:
-        - ./bin/awx_update_projects.sh --host $AWX_URL --user $AWX_USER --pass $AWX_PASS --repo https://github.com/$TRAVIS_REPO_SLUG.git --debug
-        - ./bin/awx_run_templates.sh --host $AWX_URL --user $AWX_USER --pass $AWX_PASS --repo https://github.com/$TRAVIS_REPO_SLUG.git --debug
+        - awx-update-projects --host $AWX_URL --user $AWX_USER --pass $AWX_PASS --repo https://github.com/$TRAVIS_REPO_SLUG.git --debug
+        - awx-run-templates --host $AWX_URL --user $AWX_USER --pass $AWX_PASS --repo https://github.com/$TRAVIS_REPO_SLUG.git --debug
       stage:
         deploy
 
