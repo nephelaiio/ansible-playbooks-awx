@@ -1,8 +1,8 @@
-# nephelaiio.playbook-awx
+# nephelaiio.playbooks-awx
 
-[![Build Status](https://travis-ci.org/nephelaiio/ansible-playbook-awx.svg?branch=master)](https://travis-ci.org/nephelaiio/ansible-playbook-awx)
+[![Build Status](https://travis-ci.org/nephelaiio/ansible-playbooks-awx.svg?branch=master)](https://travis-ci.org/nephelaiio/ansible-playbooks-awx)
 
-A set of [ansible playbooks](https://galaxy.ansible.com/nephelaiio/ansible-playbook-awx-local) to install and configure [Ansible AWX](https://github.com/ansible/awx).
+A set of [ansible playbooks](https://galaxy.ansible.com/nephelaiio/ansible-playbooks-awx-local) to install and configure [Ansible AWX](https://github.com/ansible/awx).
 
 ## Playbook Variables
 
@@ -106,7 +106,7 @@ awx_organizations:
         state: absent
       - name: awx
         scm_type: git
-        scm_url: https://github.com/nephelaiio/ansible-playbook-awx.git
+        scm_url: https://github.com/nephelaiio/ansible-playbooks-awx.git
         scm_branch: master
         scm_delete_on_update: false
         scm_credential: awx.github
@@ -160,7 +160,7 @@ See the [requirements](https://raw.githubusercontent.com/nephelaiio/ansible-role
 ## Example Invocation
 
 ```
-git checkout https://galaxy.ansible.com/nephelaiio/ansible-playbook-awx awx
+git checkout https://galaxy.ansible.com/nephelaiio/ansible-playbooks-awx awx
 ansible-playbook -i inventory/ awx/local.yml
 ```
 
