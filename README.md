@@ -164,7 +164,7 @@ git checkout https://galaxy.ansible.com/nephelaiio/ansible-playbooks-awx awx
 ansible-playbook -i inventory/ awx/local.yml
 ```
 
-## Testing
+## Testing (TODO)
 
 Please make sure your environment has [docker](https://www.docker.com) installed in order to run role validation tests. Additional python dependencies are listed in the [requirements](https://raw.githubusercontent.com/nephelaiio/ansible-role-requirements/master/requirements.txt)
 
