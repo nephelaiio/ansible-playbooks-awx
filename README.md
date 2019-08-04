@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/nephelaiio/ansible-playbooks-awx.svg?branch=master)](https://travis-ci.org/nephelaiio/ansible-playbooks-awx)
 
-A set of [ansible playbooks](https://galaxy.ansible.com/nephelaiio/ansible-playbooks-awx-local) to install and configure [Ansible AWX](https://github.com/ansible/awx).
+A set of ansible playbooks to install and configure [Ansible AWX](https://github.com/ansible/awx).
 
 ## Playbook Variables
 
