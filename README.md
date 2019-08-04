@@ -4,20 +4,30 @@
 
 A set of ansible playbooks to install and configure [Ansible AWX](https://github.com/ansible/awx).
 
-## Playbook Variables
+## Playbook descriptions
+
+The following lists the group targets and descriptions for every playbook
+
+| playbook      | description                            | target    |
+| ---           | ---                                    | ---       |
+| local.yml     | perform a local install of awx         | awx_app   |
+| configure.yml | configure awx projects/templates/...   | awx_proxy |
+| nginx.yml     | install an ngnix reverse proxy for awx | awx_proxy |
+
+## Playbook variables
 
 The following parameters are available/required for playbook invocation
 
 ### [local.yml](local.yml):
-| required | variable          | description                              | default |
-| ---      | ---               | ---                                      | ---     |
-| no       | awx_release       | fqdn to generate an acme certificate for | '6.0.0' |
-| no       | awx_pg_user       | postgresql connection user               | 'awx'   |
-| *yes*    | awx_pg_pass       | postgresql connection password           | n/a     |
-| no       | awx_admin_user    | awx administrator user                   | 'admin' |
-| *yes*    | awx_admin_pass    | awx administrator password               | n/a     |
-| no       | awx_rabbitmq_user | awx administrator user                   | 'awx    |
-| *yes*    | awx_rabbitmq_pass | awx administrator password               | n/a     |
+| required | variable          | description                    | default |
+| ---      | ---               | ---                            | ---     |
+| no       | awx_release       | target awx release             | '6.1.0' |
+| no       | awx_pg_user       | postgresql connection user     | 'awx'   |
+| *yes*    | awx_pg_pass       | postgresql connection password | n/a     |
+| no       | awx_admin_user    | awx administrator user         | 'admin' |
+| *yes*    | awx_admin_pass    | awx administrator password     | n/a     |
+| no       | awx_rabbitmq_user | awx administrator user         | 'awx    |
+| *yes*    | awx_rabbitmq_pass | awx administrator password     | n/a     |
 
 ### [nginx.yml](nginx.yml):
 | required | variable                              | description                                  | default                                |
