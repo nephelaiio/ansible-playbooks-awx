@@ -120,7 +120,7 @@
         nginx_http_template_enable: yes
         nginx_main_template_enable: yes
 
-    - name: update nginx pdns record
+    - name: update pdns record
       uri:
         url: "{{ pdns_url }}/api/v1/servers/localhost/zones/{{ pdns_url_zone }}"
         method: PATCH
@@ -143,4 +143,4 @@
       vars:
         pdns_url_host: "{{ acme_certificate_domain }}."
         pdns_url_zone: "{{ pdns_url_host | split_with('.') | tail | join('.') }}"
-      register: pdns_zones_query
+      when: pdns_url is defined
