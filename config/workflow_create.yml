@@ -22,6 +22,7 @@
   command: "awx-cli node create -W {{ workflow.name }} --job-template {{ workflow_node.template }} {{ workflow_node_inventory }} {{ workflow_node_credential }} -f json"
   loop_control:
     loop_var: workflow_node
+    label: "{{ workflow.name}} / {{ workflow_node.name }}"
   vars:
     workflow_node_inventory: "{{ ('--inventory ' + workflow_node.inventory | string | quote) if 'inventory' in workflow_node else '' }}"
     workflow_node_credential: "{{ ('--credential ' + workflow_node.credential | string | quote) if 'credential' in workflow_node else '' }}"
