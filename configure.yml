@@ -108,6 +108,8 @@
           loop: "{{ (awx_schedules | default([])) | list }}"
           when: schedule.state | default('present') == 'absent'
           no_log: "{{ awx_nolog }}"
+          tags:
+            - schedules
 
         - name: destroy awx workflows
           include_tasks: config/workflow_destroy.yml
@@ -118,6 +120,8 @@
             label: "{{ workflow.name }}"
           loop: "{{ awx_organizations | subelements('workflows', skip_missing='yes') }}"
           no_log: "{{ awx_nolog }}"
+          tags:
+            - workflows
 
         - name: destroy awx job templates
           command: "awx-cli job_template delete -n {{ template.name | quote }}"
@@ -266,6 +270,8 @@
           loop: "{{ awx_organizations | subelements('workflows', skip_missing='yes') }}"
           when: organization.state | default('present') == 'present' and workflow.state | default('present') == 'present'
           no_log: "{{ awx_nolog }}"
+          tags:
+            - workflows
 
         - name: create awx job schedules
           include_tasks: config/schedule_create.yml
@@ -303,5 +309,7 @@
             label: "{{ item.username }}"
           loop: "{{ awx_users | default([]) | list }}"
           no_log: "{{ awx_nolog }}"
+          tags:
+            - schedules
 
       run_once: yes
