@@ -30,12 +30,20 @@
       command: "awx-cli workflow create {{ workflow_source_create_args }}"
 
     - name: create workflow nodes
-      command: "awx-cli node create -W {{ workflow.name }} {{ workflow_node_template }} {{ workflow_node_inventory }} {{ workflow_node_credential }} -f json"
+      command: >
+        awx-cli node create -f json -W {{ workflow.name }}
+          {{ workflow_node_template }}
+          {{ workflow_node_inventory }}
+          {{ workflow_node_credential }}
+          {{ workflow_node_jobtags }}
+          {{ workflow_node_skiptags }}
       loop_control:
         loop_var: workflow_node
         label: "{{ workflow.name}} / {{ workflow_node.name }}"
       vars:
         workflow_node_inventory: "{{ ('--inventory ' + workflow_node.inventory | string | quote) if 'inventory' in workflow_node else '' }}"
+        workflow_node_jobtags: "{{ ('--job-tags ' + ([workflow_node.job_tags] | flatten | join(',') | quote)) if 'job_tags' in workflow_node else '' }}"
+        workflow_node_skiptags: "{{ ('--skip-tags ' + ([workflow_node.skip_tags] | flatten | join(',') | quote)) if 'skip_tags' in workflow_node else '' }}"
         workflow_node_credential: "{{ ('--credential ' + workflow_node.credential | string | quote) if 'credential' in workflow_node else '' }}"
         workflow_node_template: "{{ ('--job-template ' + workflow_node.template | string | quote) if (workflow_node.type | default('job') == 'job') else ('--unified-job-template ' + (workflow_dict[workflow_node.template] | string)) }}"
       loop: "{{ workflow.nodes }}"

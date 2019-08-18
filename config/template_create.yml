@@ -1,8 +1,22 @@
 ---
 - block:
 
-    - name: build template configuration options
-      set_fact:
+    - name: create job template
+      command: >
+        awx-cli job_template create --force-on-exists --format=json
+          {{ name }}
+          {{ description }}
+          {{ job_type }}
+          {{ inventory }}
+          {{ project }}
+          {{ playbook }}
+          {{ forks }}
+          {{ limit }}
+          {{ verbosity }}
+          {{ timeout }}
+          {{ skiptags }}
+          {{ askskiptags }}
+      vars:
         name: "--name {{ template.name | quote }}"
         description: "{{ ('--description ' + template.description | string | quote) if 'description' in template else '' }}"
         job_type: "{{ ('--job-type ' + template.job_type | string | quote) if 'job_type' in template else '' }}"
@@ -13,13 +27,9 @@
         limit: "{{ ('--limit ' + template.limit | string | quote) if 'limit' in template else '' }}"
         verbosity: "{{ ('--verbosity ' + template.verbosity | string | quote) if 'verbosity' in template else '' }}"
         timeout: "{{ ('--timeout ' + (template.timeout | string | quote) ) if 'timeout' in template else '' }}"
-
-    - name: build template creation command
-      set_fact:
-        template_create_args: "{{ name }} {{ description }} {{ job_type }} {{ inventory }} {{ project }} {{ playbook }} {{ forks }} {{ limit }} {{ verbosity }} {{ timeout }} --format=json"
-
-    - name: create job template
-      command: "awx-cli job_template create {{ template_create_args }} --force-on-exists"
+        jobtags: "{{ ('--job-tags ' + ([template.job_tags] | flatten | join(',') | quote)) if 'job_tags' in template else '' }}"
+        skiptags: "{{ ('--skip-tags ' + ([template.skip_tags] | flatten | join(',') | quote)) if 'skip_tags' in template else '' }}"
+        askskiptags: "{{ ('--ask-skip-tags-on-launch ' + template.ask_skip_tags | string | quote) if 'ask_skip_tags' in template else '' }}"
       register: awx_template_result
 
     - name: register template object
