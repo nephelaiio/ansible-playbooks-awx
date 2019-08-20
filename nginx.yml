@@ -16,7 +16,6 @@
 
     nginx_install_from: os_repository
     nginx_cleanup_config_path:
-      - /etc/nginx/conf.d
       - /etc/nginx/sites-enabled/default
       - /etc/nginx/sites-available/default
     nginx_main_template:
