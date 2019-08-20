@@ -18,6 +18,8 @@
     nginx_cleanup_config_path:
       - /etc/nginx/sites-enabled/default
       - /etc/nginx/sites-available/default
+    nginx_extra_conf: |
+      server_names_hash_bucket_size 64;
     nginx_main_template:
       conf_file_name: nginx.conf
       conf_file_location: /etc/nginx/
@@ -107,6 +109,13 @@
         nginx_http_template_enable: no
         nginx_main_template_enable: no
 
+    - name: define extra nginx parameters
+      copy:
+        content: "{{ nginx_extra_conf }}"
+        dest: "{{ nginx_main_template.conf_file_location }}/conf.d/extra.conf"
+        owner: "{{ nginx_main_template.user }}"
+      notify: restart nginx
+
     - name: generate certificates
       import_role:
         name: nephelaiio.acme_certificate_route53
@@ -143,3 +152,10 @@
         pdns_url_host: "{{ acme_certificate_domain }}."
         pdns_url_zone: "{{ pdns_url_host | split_with('.') | tail | join('.') }}"
       when: pdns_url is defined
+
+  handlers:
+
+    - name: restart nginx
+      service:
+        name: nginx
+        state: restarted
