@@ -1,8 +1,8 @@
 ---
-- name: create inventory
+- name: create inventory - {{ inventory.name }}
   command: "awx-cli inventory create -n {{ inventory.name | quote }} --organization {{ organization.name | quote }} -f json"
 
-- name: build inventory configuration options
+- name: build inventory configuration options - {{ inventory.name }}
   set_fact:
     source_name: "-n {{ inventory.name | string | quote }}"
     description: "{{ ('--description ' + inventory.description | string | quote) if 'description' in inventory else '' }}"
@@ -21,12 +21,12 @@
     update_cache_timeout: "{{ ('--update-cache-timeout ' + (inventory.update_cache_timeout | string | quote)) if 'update_cache_timeout' in inventory else '' }}"
     update_on_project_update: "{{ ('--update-on-project-update ' + (inventory.update_on_project_update | string | quote)) if 'update_on_project_update' in inventory else '' }}"
 
-- name: build inventory creation command
+- name: build inventory creation command - {{ inventory.name }}
   set_fact:
     inventory_source_create_args: "{{ source_name }} {{ description }} {{ source }} {{ source_inventory }} {{ source_project }} {{ source_path }} {{ source_regions }} {{ source_script }} {{ timeout }} {{ instance_filters }} {{ group_by }} {{ overwrite }} {{ overwrite_vars }} {{ update_on_launch }} {{ update_cache_timeout }} {{ update_on_project_update }}"
 
-- name: create inventory source
+- name: create inventory source - {{ source_name }}
   command: "awx-cli inventory_source create {{ inventory_source_create_args }}"
 
-- name: update inventory source
+- name: update inventory source - {{ source_name }}
   command: "awx-cli inventory_source modify {{ inventory_source_create_args }}"
