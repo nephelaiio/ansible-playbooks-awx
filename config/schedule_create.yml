@@ -1,18 +1,18 @@
 ---
-- name: build schedule configuration options
+- name: build schedule configuration options - {{ schedule.name }}
   set_fact:
-    name: "--name {{ schedule.name | quote }}"
-    description: "{{ ('--description ' + schedule.description | string | quote) if 'description' in schedule else '' }}"
-    job_template: "{{ ('--job-template ' + schedule.job_template | string | quote) if 'job_template' in schedule else '' }}"
-    inventory_source: "{{ ('--inventory-source ' + schedule.inventory_source | string | quote) if 'inventory_source' in schedule else '' }}"
-    project: "{{ ('--project ' + schedule.project | string | quote) if 'project' in schedule else '' }}"
-    enabled: "{{ ('--enabled ' + (schedule.enabled | string | quote)) if 'enabled' in schedule else '' }}"
-    rrule: "--rrule {{ schedule.rrule | string | quote }}"
+    schedule_name: "--name {{ schedule.name | quote }}"
+    schedule_description: "{{ ('--description ' + schedule.description | string | quote) if 'description' in schedule else '' }}"
+    schedule_job_template: "{{ ('--job-template ' + schedule.job_template | string | quote) if 'job_template' in schedule else '' }}"
+    schedule_inventory_source: "{{ ('--inventory-source ' + schedule.inventory_source | string | quote) if 'inventory_source' in schedule else '' }}"
+    schedule_project: "{{ ('--project ' + schedule.project | string | quote) if 'project' in schedule else '' }}"
+    schedule_enabled: "{{ ('--enabled ' + (schedule.enabled | string | quote)) if 'enabled' in schedule else '' }}"
+    schedule_rrule: "--rrule {{ schedule.rrule | string | quote }}"
 
-- name: build schedule creation command
+- name: build schedule creation command - {{ schedule.name }}
   set_fact:
-    schedule_create_args: "{{ name }} {{ description }} {{ job_template }} {{ inventory_source }} {{ project }} {{ enabled }} {{ rrule }} --format=json"
+    schedule_create_args: "{{ schedule_name }} {{ schedule_description }} {{ schedule_job_template }} {{ schedule_inventory_source }} {{ schedule_project }} {{ schedule_enabled }} {{ schedule_rrule }} --format=json"
 
-- name: create job schedule
+- name: create job schedule - {{ schedule.name }}
   command: "awx-cli schedule create {{ schedule_create_args }} --force-on-exists"
   changed_when: false

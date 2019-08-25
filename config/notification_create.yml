@@ -1,30 +1,30 @@
 ---
-- name: build notification configuration options
+- name: build notification configuration options - {{ notification.name }}
   set_fact:
-    name: "--name {{ notification.name | quote }}"
+    notification_name: "--name {{ notification.name | quote }}"
     _organization: "--organization {{ organization.name | quote }}"
     notification_type: "--notification-type {{ notification.type | quote }}"
-    channels: "--channels {{ notification.channel | quote }}"
-    token: "{{ ('--token ' + notification.token | string | quote) if 'token' in notification else '' }}"
+    notification_channels: "--channels {{ notification.channel | quote }}"
+    notification_token: "{{ ('--token ' + notification.token | string | quote) if 'token' in notification else '' }}"
   tags:
     - notifications
   no_log: "{{ awx_nolog }}"
 
-- name: build notification creation command
+- name: build notification creation command - {{ notification.name }}
   set_fact:
-    notification_create_args: "{{ name }} {{ notification_type }} {{ channels }} {{ _organization }} {{ token }}"
+    notification_create_args: "{{ notification_name }} {{ notification_type }} {{ notification_channels }} {{ _organization }} {{ notification_token }}"
   tags:
     - notifications
   no_log: "{{ awx_nolog }}"
 
-- name: create notification
+- name: create notification - {{ notification.name }}
   command: "awx-cli notification_template create {{ notification_create_args }} --force-on-exists"
   changed_when: false
   tags:
     - notifications
   no_log: "{{ awx_nolog }}"
 
-- name: set awx auth token
+- name: set awx auth token - {{ notification.name }}
   set_fact:
     awx_authorization_token: "{{ awx_admin_user }}:{{ awx_admin_pass }}"
   no_log: "{{ awx_nolog }}"
@@ -63,7 +63,7 @@
   tags:
     - notifications
 
-- name: set job templates inventory and notification template ID
+- name: set job templates inventory and notification template ID - {{ notification.name }}
   set_fact:
     awx_job_templates_inventory: "{{ awx_query_job_templates.content | from_json }}"
     awx_notification_template_id: "{{ awx_query_notification_template.json.results[0].id }}"
@@ -76,7 +76,7 @@
   tags:
     - notifications
 
-- name: update job template to activate notifications
+- name: update job template to activate notifications - {{ notification.name }}
   uri:
     url: "{{ awx_url_local }}/api/v2/job_templates/{{ job_template_id }}/notification_templates_success"
     method: POST

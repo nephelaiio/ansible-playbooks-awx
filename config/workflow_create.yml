@@ -16,20 +16,20 @@
         label: "{{ workflow_item.name }}"
       loop: "{{ workflow_data.results }}"
 
-    - name: build workflow configuration options
+    - name: build workflow configuration options - {{ workflow.name }}
       set_fact:
-        name: "-n {{ workflow.name | string | quote }}"
-        description: "{{ ('--description ' + workflow.description | string | quote) if 'description' in workflow else '' }}"
+        workflow_name: "-n {{ workflow.name | string | quote }}"
+        workflow_description: "{{ ('--description ' + workflow.description | string | quote) if 'description' in workflow else '' }}"
         workflow_org: "{{ '--organization ' + organization.name | string | quote }}"
 
-    - name: build workflow creation command
+    - name: build workflow creation command - {{ workflow.name }}
       set_fact:
-        workflow_source_create_args: "{{ name }} {{ description }} {{ workflow_org }}"
+        workflow_source_create_args: "{{ workflow_name }} {{ workflow_description }} {{ workflow_org }}"
 
-    - name: create workflow
+    - name: create workflow - {{ workflow.name }}
       command: "awx-cli workflow create {{ workflow_source_create_args }}"
 
-    - name: create workflow nodes
+    - name: create workflow nodes - {{ workflow.name }}
       command: >
         awx-cli node create -f json -W {{ workflow.name }}
           {{ workflow_node_template }}
