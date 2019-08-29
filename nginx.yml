@@ -38,7 +38,10 @@
       server_tokens: off
     nginx_http_template:
       default:
-        port: 80
+        listen:
+          listen_awx:
+            ip: '*'
+            port: 80
         server_name: "{{ acme_certificate_domain }}"
         conf_file_name: "{{ acme_certificate_domain }}.http.conf"
         https_redirect: yes
