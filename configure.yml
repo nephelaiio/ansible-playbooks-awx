@@ -82,11 +82,13 @@
 
         - name: manage awx settings
           tower_settings:
-            name: "{{ item.key }}"
-            value: "{{ item.value }}"
+            name: "{{ item }}"
+            value: "{{ awx_settings[item] | string }}"
           loop_control:
-            label: "{{ item.key }}"
-          loop: "{{ (awx_settings | default({})) | dict2items }}"
+            label: "{{ item }}"
+          loop: "{{ awx_settings.keys() | list | default([]) }}"
+          tags:
+            - settings
 
         - name: destroy awx notifications
           include_tasks: config/notification_destroy.yml
