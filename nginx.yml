@@ -39,14 +39,17 @@
     nginx_http_template:
       default:
         listen:
-          listen_awx:
+          listen_default:
             ip: '*'
             port: 80
         server_name: "{{ acme_certificate_domain }}"
         conf_file_name: "{{ acme_certificate_domain }}.http.conf"
         https_redirect: yes
       awx:
-        port: 443
+        listen:
+          listen_awx:
+            ip: '*'
+            port: 443
         server_name: "{{ acme_certificate_domain }}"
         conf_file_name: "{{ acme_certificate_domain }}.https.conf"
         ssl:
