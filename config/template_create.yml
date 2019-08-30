@@ -17,6 +17,7 @@
           {{ tpl_skiptags }}
           {{ tpl_askskiptags }}
           {{ tpl_askinventory }}
+          {{ tpl_askcredentials }}
           {{ tpl_extra_vars }}
       vars:
         tpl_name: "--name {{ template.name | quote }}"
@@ -33,6 +34,7 @@
         tpl_skiptags: "{{ ('--skip-tags ' + ([template.skip_tags] | flatten | join(',') | quote)) if 'skip_tags' in template else '' }}"
         tpl_askskiptags: "{{ ('--ask-skip-tags-on-launch ' + template.ask_skip_tags | string | quote) if 'ask_skip_tags' in template else '' }}"
         tpl_askinventory: "{{ ('--ask-inventory-on-launch ' + template.ask_inventory | string | quote) if 'ask_inventory' in template else '' }}"
+        tpl_askcredentials: "{{ ('--ask-credentials-on-launch ' + template.ask_credentials | string | quote) if 'ask_credentials' in template else '' }}"
         tpl_extra_vars: "{{ ('--extra-vars ' + template.extra_vars | string | quote) if 'extra_vars' in template else '' }}"
       register: awx_template_result
 
