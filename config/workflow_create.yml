@@ -34,7 +34,6 @@
         awx-cli node create -f json -W {{ workflow.name }}
           {{ workflow_node_template }}
           {{ workflow_node_inventory }}
-          {{ workflow_node_credential }}
           {{ workflow_node_jobtags }}
           {{ workflow_node_skiptags }}
       loop_control:
@@ -44,7 +43,6 @@
         workflow_node_inventory: "{{ ('--inventory ' + workflow_node.inventory | string | quote) if 'inventory' in workflow_node else '' }}"
         workflow_node_jobtags: "{{ ('--job-tags ' + ([workflow_node.job_tags] | flatten | join(',') | quote)) if 'job_tags' in workflow_node else '' }}"
         workflow_node_skiptags: "{{ ('--skip-tags ' + ([workflow_node.skip_tags] | flatten | join(',') | quote)) if 'skip_tags' in workflow_node else '' }}"
-        workflow_node_credential: "{{ ('--credential ' + workflow_node.credential | string | quote) if 'credential' in workflow_node else '' }}"
         workflow_node_template: "{{ ('--job-template ' + workflow_node.template | string | quote) if (workflow_node.type | default('job') == 'job') else ('--unified-job-template ' + (workflow_dict[workflow_node.template] | string)) }}"
       loop: "{{ workflow.nodes }}"
       register: workflow_nodes
@@ -62,7 +60,7 @@
       command: "{{ workflow_node_associate }} -W {{ workflow.name }} {{ workflow_node_parent_id }} {{ workflow_node_id }}"
       loop_control:
         loop_var: workflow_node
-        label: "{{ workflow.name}} / {{ workflow_node.name }}"
+        label: "{{ workflow.name }} / {{ workflow_node.name }}"
       vars:
         workflow_node_map: "{{ dict(workflow_node_pairs) }}"
         workflow_node_associate: "awx-cli node {{ 'associate_' + ( workflow_node.parent_type | default('success') ) + '_node' }}"
@@ -72,6 +70,19 @@
         workflow_node_parent_id: "{{ ([workflow_node_parent_name] | map('extract', workflow_node_map) | list | head) if workflow_node_parent_name != '' else '' }}"
       loop: "{{ workflow.nodes }}"
       when: workflow_node_parent_name != ''
+
+    - name: associate workflow node credentials
+      command: "awx-cli node associate_credential --node {{ workflow_node_id }} --credential {{ workflow_node_credential }}"
+      loop_control:
+        loop_var: workflow_credential
+        label: "{{ workflow.name }} / {{ workflow_node.name }} / {{ workflow_node_credential }}"
+      vars:
+        workflow_node: "{{ workflow_credential.0 }}"
+        workflow_node_map: "{{ dict(workflow_node_pairs) }}"
+        workflow_node_name: "{{ workflow_node.name }}"
+        workflow_node_id: "{{ [workflow_node_name] | map('extract', workflow_node_map)| list | head }}"
+        workflow_node_credential: "{{ workflow_credential.1 }}"
+      loop: "{{ workflow.nodes | subelements('credentials', 'skip_missing=yes') }}"
 
   tags:
     - workflows
