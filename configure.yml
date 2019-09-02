@@ -52,6 +52,8 @@
             force_basic_auth: yes
             status_code: 200
           register: credential_type_query
+          tags:
+            - always
 
         - name: set credential type dict
           set_fact:
@@ -60,6 +62,8 @@
             loop_var: credential_type
             label: "{{ credential_type.kind }}"
           loop: "{{ credential_type_query.json.results | list | flatten(levels=1) }}"
+          tags:
+            - always
 
         - name: query credentials
           uri:
@@ -71,6 +75,8 @@
             force_basic_auth: yes
             status_code: 200
           register: credential_query
+          tags:
+            - always
 
         - name: set credential dict
           set_fact:
