@@ -79,6 +79,8 @@
             loop_var: credential
             label: "{{ credential.kind }}"
           loop: "{{ credential_query.json.results | list | flatten(levels=1) }}"
+          tags:
+            - always
 
         - name: manage awx settings
           tower_settings:
