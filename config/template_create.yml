@@ -55,6 +55,9 @@
       loop_control:
         loop_var: tpl_credential
         label: "{{ tpl_credential.name }}"
+      vars:
+        credential_name: "{{ tpl_credential.name }}"
+        credential_kind: "{{ tpl_credential.kind }}"
       loop: "{{ template.credentials | default([]) }}"
       when:
         - not tpl_credential.name in (template_object.summary_fields.credentials | map(attribute='name'))
