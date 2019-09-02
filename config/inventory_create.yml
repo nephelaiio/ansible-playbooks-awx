@@ -25,8 +25,8 @@
   set_fact:
     inventory_source_create_args: "{{ source_name }} {{ description }} {{ source }} {{ source_inventory }} {{ source_project }} {{ source_path }} {{ source_regions }} {{ source_script }} {{ timeout }} {{ instance_filters }} {{ group_by }} {{ overwrite }} {{ overwrite_vars }} {{ update_on_launch }} {{ update_cache_timeout }} {{ update_on_project_update }}"
 
-- name: create inventory source - {{ source_name }}
+- name: create inventory source - {{ inventory.name }}
   command: "awx-cli inventory_source create {{ inventory_source_create_args }}"
 
-- name: update inventory source - {{ source_name }}
+- name: update inventory source - {{ inventory.name }}
   command: "awx-cli inventory_source modify {{ inventory_source_create_args }}"
