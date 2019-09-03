@@ -130,7 +130,6 @@
       import_role:
         name: nginxinc.nginx
       vars:
-        nginx_cleanup_config: yes
         nginx_http_template_enable: yes
         nginx_main_template_enable: yes
 
