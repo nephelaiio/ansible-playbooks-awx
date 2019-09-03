@@ -186,6 +186,34 @@
           no_log: "{{ awx_nolog }}"
           ignore_errors: yes
 
+        - name: destroy awx roles
+          tower_role:
+            name: "{{ team.name }}"
+            organization: "{{ organization.name }}"
+            role: "{{ team.role }}"
+            state: absent
+          vars:
+            organization: "{{ item }}"
+            team: "{{ item.1 }}"
+          loop_control:
+            label: "{{ organization.name }}"
+          loop: "{{ awx_organizations | subelements('teams', skip_missing='yes') }}"
+          when: organization.state | default('present') == 'absent' or team.state | default('present') == 'absent'
+          no_log: "{{ awx_nolog }}"
+
+        - name: destroy awx teams
+          tower_team:
+            name: "{{ organization.name }}"
+            state: absent
+          vars:
+            organization: "{{ item.0 }}"
+            team: "{{ item.1 }}"
+          loop_control:
+            label: "{{ organization.name }}"
+          loop: "{{ awx_organizations | subelements('teams', skip_missing='yes') | list }}"
+          when: organization.state | default('present') == 'absent' or team.state | default('present') == 'absent'
+          no_log: "{{ awx_nolog }}"
+
         - name: destroy awx organizations
           tower_organization:
             name: "{{ organization.name }}"
@@ -208,6 +236,35 @@
             label: "{{ organization.name }}"
           loop: "{{ awx_organizations | list }}"
           when: item.state | default('present') == 'present'
+          no_log: "{{ awx_nolog }}"
+
+        - name: create awx teams
+          tower_team:
+            name: "{{ team.name }}"
+            organization: "{{ organization.name }}"
+            state: present
+          vars:
+            organization: "{{ item.0 }}"
+            team: "{{ item.1 }}"
+          loop_control:
+            label: "{{ organization.name }}"
+          loop: "{{ awx_organizations | subelements('teams', skip_missing='yes') }}"
+          when: organization.state | default('present') == 'present' or team.state | default('present') == 'present'
+          no_log: "{{ awx_nolog }}"
+
+        - name: create awx roles
+          tower_role:
+            name: "{{ team.name }}"
+            organization: "{{ organization.name }}"
+            role: "{{ team.role }}"
+            state: present
+          vars:
+            organization: "{{ item }}"
+            team: "{{ item.1 }}"
+          loop_control:
+            label: "{{ organization.name }}"
+          loop: "{{ awx_organizations | subelements('teams', skip_missing='yes') }}"
+          when: organization.state | default('present') == 'present' or team.state | default('present') == 'present'
           no_log: "{{ awx_nolog }}"
 
         - name: create awx credentials
