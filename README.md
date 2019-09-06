@@ -44,8 +44,8 @@ The following parameters are available/required for playbook invocation
 awx_users:
   - first_name: First Name
     last_name: Last Name
-    username: "{{ user_name }}"
-    password: "{{ user_pass }}"
+    username: testuser
+    password: supersecret
     superuser: yes
 ```
 
