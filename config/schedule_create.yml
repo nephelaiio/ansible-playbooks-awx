@@ -2,7 +2,7 @@
 - name: check schedule parameters
   fail:
     msg: "job_template and workflow parameters are mutually exclusive"
-  when: "{{ ('job_template' in schedule) and ('workflow' in schedule) }}"
+  when: "('job_template' in schedule) and ('workflow' in schedule)"
 
 - name: build schedule configuration options - {{ schedule.name }}
   set_fact:
