@@ -9,4 +9,4 @@
 - src: nephelaiio.pip
   version: 4.0.1
 - src: nephelaiio.acme_certificate_route53
-  version: 1.0.0
+  version: 1.0.1
