@@ -236,6 +236,29 @@
           when: organization.state | default('present') == 'present' and credential.state | default('present') == 'present'
           no_log: "{{ awx_nolog }}"
 
+        - name: query credentials
+          uri:
+            url: "{{ awx_url }}/api/v2/credentials/"
+            method: GET
+            body_format: json
+            user: "{{ awx_admin_user | default('admin') }}"
+            password: "{{ awx_admin_pass }}"
+            force_basic_auth: yes
+            status_code: 200
+          register: credential_query
+          tags:
+            - always
+
+        - name: set credential dict
+          set_fact:
+            awx_credential_dict: "{{ (awx_credential_dict | default({})) | combine({ credential.name: credential.id }) }}"
+          loop_control:
+            loop_var: credential
+            label: "{{ credential.kind }}"
+          loop: "{{ credential_query.json.results | list | flatten(levels=1) }}"
+          tags:
+            - always
+
         - name: create awx projects
           include_tasks: config/project_create.yml
           vars:
