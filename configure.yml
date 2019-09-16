@@ -10,10 +10,6 @@
     awx_cli_conf: ~/.tower_cli.cfg
     awx_nolog: yes
 
-  roles:
-
-    - nephelaiio.plugins
-
   tasks:
 
     - name: include vars files

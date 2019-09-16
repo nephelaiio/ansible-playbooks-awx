@@ -84,10 +84,6 @@
             sticky_cookie: false
             servers: "{{ awx_app_servers }}"
 
-  roles:
-
-    - nephelaiio.plugins
-
   tasks:
 
     - name: gather facts from upstream servers
