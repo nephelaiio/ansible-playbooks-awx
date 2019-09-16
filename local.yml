@@ -33,6 +33,7 @@
 
   roles:
 
+    - nephelaiio.plugins
     - nephelaiio.pip
     - nephelaiio.docker
 
