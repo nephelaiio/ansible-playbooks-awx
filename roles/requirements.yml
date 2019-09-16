@@ -3,7 +3,7 @@
   version: a92d424bdb5dc51b143c702754bed761e919a576
   name: nginxinc.nginx
 - src: nephelaiio.plugins
-  version: 1.0.15
+  version: 1.0.16
 - src: nephelaiio.docker
   version: 4.0.3
 - src: nephelaiio.pip
