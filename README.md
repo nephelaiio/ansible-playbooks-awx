@@ -29,14 +29,6 @@ The following parameters are available/required for playbook invocation
 | no       | awx_rabbitmq_user | awx administrator user         | 'awx    |
 | *yes*    | awx_rabbitmq_pass | awx administrator password     | n/a     |
 
-### [nginx.yml](nginx.yml):
-| required | variable                              | description                                  | default                                |
-| ---      | ---                                   | ---                                          | ---                                    |
-| *yes*    | awx_url                               | target awx url                               | n/a                                    |
-| *yes*    | acme_certificate_email                | awx url                                      | n/a                                    |
-| *yes*    | acme_certificate_aws_accesskey_id     | an ec2 key id with route53 management rights | lookup('env', 'AWS_ACCESS_KEY_ID')     |
-| *yes*    | acme_certificate_aws_accesskey_secret | an ec2 key secret                            | lookup('env', 'AWS_SECRET_ACCESS_KEY') |
-
 ### [configure.yml](configure.yml):
 | required | variable      | description                                  | default |
 | *yes*    | awx_url       | target awx url                               | n/a     |
