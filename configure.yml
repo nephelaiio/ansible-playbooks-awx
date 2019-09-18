@@ -184,6 +184,8 @@
           loop: "{{ awx_organizations | subelements('credentials', skip_missing='yes') }}"
           when: organization.state | default('present') == 'absent' or credential.state | default('present') == 'absent'
           no_log: "{{ awx_nolog }}"
+          tags:
+            - credentials
           ignore_errors: yes
 
         - name: destroy awx organizations
@@ -235,6 +237,8 @@
           loop: "{{ awx_organizations | subelements('credentials', skip_missing='yes') }}"
           when: organization.state | default('present') == 'present' and credential.state | default('present') == 'present'
           no_log: "{{ awx_nolog }}"
+          tags:
+            - credentials
 
         - name: query credentials
           uri:
