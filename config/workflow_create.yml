@@ -102,5 +102,13 @@
         workflow_node_credential: "{{ workflow_credential.1 }}"
       loop: "{{ workflow.nodes | subelements('credentials', 'skip_missing=yes') }}"
 
+    - name: add workflow roles
+      command: "awx-cli role {{ grant_action }} --workflow {{ workflow.name }} --type {{ permission.role }} --team {{ permission.team }}"
+      vars:
+        grant_action: "{{ 'grant' if (permission.state | default('present') == 'present') else 'revoke' }}"
+      loop_control:
+        loop_var: permission
+      loop: "{{ template.permissions | default([]) }}"
+
   tags:
     - workflows

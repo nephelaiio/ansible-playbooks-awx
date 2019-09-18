@@ -62,5 +62,14 @@
       when:
         - not tpl_credential.name in (template_object.summary_fields.credentials | map(attribute='name'))
 
+    - name: add template roles
+      command: "awx-cli role {{ grant_action }} --template {{ template.name }} --type {{ permission.role }} --team {{ permission.team }}"
+      vars:
+        grant_action: "{{ 'grant' if (permission.state | default('present') == 'present') else 'revoke' }}"
+      loop_control:
+        loop_var: permission
+      loop: "{{ template.permissions | default([]) }}"
+
+
   tags:
     - templates
