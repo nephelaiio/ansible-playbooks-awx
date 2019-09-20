@@ -99,6 +99,7 @@
   when:
     - awx_set_update_parameters is succeeded
   delegate_to: localhost
+  ignore_errors: yes
   no_log: "{{ awx_nolog }}"
   tags:
     - notifications
