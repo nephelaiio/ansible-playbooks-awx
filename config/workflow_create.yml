@@ -56,9 +56,13 @@
       set_fact:
         workflow_node_pairs: "{{ workflow_node_names | zip(workflow_node_ids) | list }}"
 
+    - name: clear node associations
+      set_fact:
+        node_associations: []
+
     - name: build workflow nodes associations
       set_fact:
-        node_associations: "{{ (node_associations | default([])) | union([workflow_node_spec] | product([workflow_node_parent_id] | flatten) | list) }}"
+        node_associations: "{{ node_associations | union([workflow_node_spec] | product([workflow_node_parent_id] | flatten) | list) }}"
       loop_control:
         loop_var: workflow_node
         label: "{{ workflow.name }} / {{ workflow_node_name }}"
