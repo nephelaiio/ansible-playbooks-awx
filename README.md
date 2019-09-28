@@ -21,7 +21,7 @@ The following parameters are available/required for playbook invocation
 ### [local.yml](local.yml):
 | required | variable          | description                    | default |
 | ---      | ---               | ---                            | ---     |
-| no       | awx_release       | target awx release             | '6.1.0' |
+| no       | awx_release       | target awx release             | '7.1.0' |
 | no       | awx_pg_user       | postgresql connection user     | 'awx'   |
 | *yes*    | awx_pg_pass       | postgresql connection password | n/a     |
 | no       | awx_admin_user    | awx administrator user         | 'admin' |
@@ -30,12 +30,12 @@ The following parameters are available/required for playbook invocation
 | *yes*    | awx_rabbitmq_pass | awx administrator password     | n/a     |
 
 ### [configure.yml](configure.yml):
-| required | variable      | description                                  | default |
-| *yes*    | awx_url       | target awx url                               | n/a     |
-| *no*     | awx_users     | [list of awx users](#Users)                  | []      |
-| *no*     | awx_schedules | [list of awx template schedules](#Schedules) | []      |
-| *no*     | awx_templates | [list of awx template](#Templates)           | []      |
-| *no*     | awx_organizations | [list of awx template](#Organizations) | []      |
+| required | variable          | description                                  | default |
+| *yes*    | awx_url           | target awx url                               | n/a     |
+| *no*     | awx_users         | [list of awx users](#Users)                  | []      |
+| *no*     | awx_schedules     | [list of awx template schedules](#Schedules) | []      |
+| *no*     | awx_templates     | [list of awx template](#Templates)           | []      |
+| *no*     | awx_organizations | [list of awx template](#Organizations)       | []      |
 
 ## Data Formats
 
@@ -93,15 +93,15 @@ awx_organizations:
     credentials:
       - name: awx.github
         kind: scm
-        username: "{{ awx_github_user }}"
-        password: "{{ awx_github_pass }}"
+        username: user
+        password: pass
       - name: awx.vault
         kind: vault
-        vault_password: "{{ awx_vault_awx_pass }}"
+        vault_password: password
       - name: awx.ssh
         kind: ssh
-        username: "{{ awx_machine_user }}"
-        ssh_key_data: "{{ awx_machine_key }}"
+        username: user
+        ssh_key_data: ....
 
     projects:
       - name: Demo Project

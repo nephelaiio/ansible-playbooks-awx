@@ -12,7 +12,7 @@
       - docker-compose
 
     host_port: "{{ awx_container_port | default('80') }}"
-    dockerhub_version: "{{ awx_release | default('7.0.0') }}"
+    dockerhub_version: "{{ awx_release | default('7.1.0') }}"
     dockerhub_base: ansible
     docker_compose_dir: /tmp/awxcompose
     awx_web_hostname: awxweb
