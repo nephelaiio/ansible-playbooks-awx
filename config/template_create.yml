@@ -44,7 +44,7 @@
 
     - name: add template credentials - {{ template.name }}
       uri:
-        url: "{{ awx_url }}/api/v2/job_templates/{{ template_object.id }}/credentials/"
+        url: "{{ awx_local_url }}/api/v2/job_templates/{{ template_object.id }}/credentials/"
         method: POST
         body_format: json
         body: "{{ lookup('template', 'template_credential.j2.json') }}"

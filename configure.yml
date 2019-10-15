@@ -9,6 +9,7 @@
 
     awx_cli_conf: ~/.tower_cli.cfg
     awx_nolog: yes
+    awx_local_url: "http://localhost:{{ awx_container_port | default('80') }}"
 
   roles:
 
@@ -34,7 +35,7 @@
         dest: "{{ awx_cli_conf }}"
         mode: 0600
       vars:
-        host: "{{ awx_url | urlsplit('hostname') }}"
+        host: "{{ awx_local_url }}"
         username: "{{ awx_admin_user | default('admin') }}"
         password: "{{ awx_admin_pass }}"
         verify_ssl: false
@@ -44,7 +45,7 @@
 
         - name: query credential types
           uri:
-            url: "{{ awx_url }}/api/v2/credential_types/"
+            url: "{{ awx_local_url }}/api/v2/credential_types/"
             method: GET
             body_format: json
             user: "{{ awx_admin_user | default('admin') }}"
@@ -215,7 +216,7 @@
 
         - name: query credentials
           uri:
-            url: "{{ awx_url }}/api/v2/credentials/"
+            url: "{{ awx_local_url }}/api/v2/credentials/"
             method: GET
             body_format: json
             user: "{{ awx_admin_user | default('admin') }}"

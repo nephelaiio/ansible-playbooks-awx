@@ -31,7 +31,6 @@ The following parameters are available/required for playbook invocation
 
 ### [configure.yml](configure.yml):
 | required | variable          | description                                  | default |
-| *yes*    | awx_url           | target awx url                               | n/a     |
 | *no*     | awx_users         | [list of awx users](#Users)                  | []      |
 | *no*     | awx_schedules     | [list of awx template schedules](#Schedules) | []      |
 | *no*     | awx_templates     | [list of awx template](#Templates)           | []      |
@@ -152,9 +151,6 @@ And the following role dependencies by play (no dependencies if play is not list
 * [nephelaiio.plugins](https://galaxy.ansible.com/nephelaiio/plugins)
 * [nephelaiio.docker](https://galaxy.ansible.com/nephelaiio/docker)
 * [nephelaiio.pip](https://galaxy.ansible.com/nephelaiio/pip)
-
-### [nginx.yml](nginx.yml):
-* [nginxinc.nginx](https://galaxy.ansible.com/nginxinc/nginx)
 * [nephelaiio.acme_certificate_route53](https://galaxy.ansible.com/nephelaiio/acme_certificate_route53)
 
 See the [requirements](https://raw.githubusercontent.com/nephelaiio/ansible-role-requirements/master/requirements.txt) and [meta](meta.yml) files for more details
