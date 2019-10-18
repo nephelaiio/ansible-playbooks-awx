@@ -103,6 +103,7 @@
             label: "{{ workflow.name }}"
           loop: "{{ awx_organizations | subelements('workflows', skip_missing='yes') }}"
           no_log: "{{ awx_nolog }}"
+          when: awx_workflow_manage | default('yes') | bool
           tags:
             - workflows
 
@@ -297,7 +298,10 @@
           loop_control:
             label: "{{ workflow.name }}"
           loop: "{{ awx_organizations | subelements('workflows', skip_missing='yes') }}"
-          when: organization.state | default('present') == 'present' and workflow.state | default('present') == 'present'
+          when:
+            - organization.state | default('present') == 'present'
+            - workflow.state | default('present') == 'present'
+            - awx_workflow_manage | default('yes') | bool
           no_log: "{{ awx_nolog }}"
           tags:
             - workflows
