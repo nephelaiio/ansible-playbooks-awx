@@ -187,6 +187,16 @@
           when: item.state | default('present') == 'present'
           no_log: "{{ awx_nolog }}"
 
+        - name: manage awx teams
+          tower_team:
+            name: "{{ team.name }}"
+            organization: "{{ team.organization }}"
+            state: "{{ team.state | default('present') }}"
+          loop_control:
+            loop_var: team
+            label: "{{ team.name }}"
+          loop: "{{ awx_teams | default([]) }}"
+
         - name: create awx credentials
           tower_credential:
             organization: "{{ organization.name }}"
@@ -330,7 +340,7 @@
           tags:
             - notifications
 
-        - name: create awx users
+        - name: manage awx users
           tower_user:
             username: "{{ item.username }}"
             password: "{{ item.password }}"
