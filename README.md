@@ -21,7 +21,7 @@ The following parameters are available/required for playbook invocation
 ### [local.yml](local.yml):
 | required | variable          | description                    | default |
 | ---      | ---               | ---                            | ---     |
-| no       | awx_release       | target awx release             | '7.0.0' |
+| no       | awx_release       | target awx release             | '8.0.0' |
 | no       | awx_pg_user       | postgresql connection user     | 'awx'   |
 | *yes*    | awx_pg_pass       | postgresql connection password | n/a     |
 | no       | awx_admin_user    | awx administrator user         | 'admin' |
