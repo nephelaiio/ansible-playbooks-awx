@@ -112,7 +112,7 @@
         grant_action: "{{ 'grant' if (permission.state | default('present') == 'present') else 'revoke' }}"
       loop_control:
         loop_var: permission
-      loop: "{{ template.permissions | default([]) }}"
+      loop: "{{ workflow.permissions | default([]) }}"
 
   tags:
     - workflows
