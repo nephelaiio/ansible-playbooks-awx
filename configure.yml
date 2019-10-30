@@ -196,6 +196,8 @@
             loop_var: team
             label: "{{ team.name }}"
           loop: "{{ awx_teams | default([]) }}"
+          tags:
+            - teams
 
         - name: create awx credentials
           tower_credential:
