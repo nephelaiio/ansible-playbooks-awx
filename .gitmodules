@@ -1,7 +1,7 @@
 [submodule "submodules/awx"]
 	path = submodules/awx
 	url = https://github.com/ansible/awx.git
-	branch=7.0.0
+	branch=9.0.1
 [submodule "plugins/mitogen"]
 	path = plugins/mitogen
 	url = https://github.com/dw/mitogen.git
