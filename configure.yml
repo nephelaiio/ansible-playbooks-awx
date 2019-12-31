@@ -69,6 +69,7 @@
           loop_control:
             label: "{{ item }}"
           loop: "{{ awx_settings.keys() | list | default([]) }}"
+          ignore_errors: yes
           tags:
             - settings
 
