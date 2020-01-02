@@ -30,3 +30,6 @@
 
 - name: update inventory source - {{ inventory.name }}
   command: "awx-cli inventory_source modify {{ inventory_source_create_args }}"
+
+- name: refresh inventory source - {{ inventory.name }}
+  command: "awx-cli inventory_source update {{ inventory.name }}"
