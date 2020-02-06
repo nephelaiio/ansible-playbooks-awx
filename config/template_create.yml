@@ -19,6 +19,7 @@
           {{ tpl_askinventory }}
           {{ tpl_askcredentials }}
           {{ tpl_askvars }}
+          {{ tpl_asklimit }}
           {{ tpl_extra_vars }}
       vars:
         tpl_name: "--name {{ template.name | quote }}"
@@ -37,6 +38,7 @@
         tpl_askinventory: "{{ ('--ask-inventory-on-launch ' + template.ask_inventory | string | quote) if 'ask_inventory' in template else '' }}"
         tpl_askcredentials: "{{ ('--ask-credentials-on-launch ' + template.ask_credentials | string | quote) if 'ask_credentials' in template else '' }}"
         tpl_askvars: "{{ ('--ask-variables-on-launch ' + template.ask_vars | string | quote) if 'ask_vars' in template else '' }}"
+        tpl_asklimit: "{{ ('--ask-limit-on-launch ' + template.ask_limit | string | quote) if 'ask_limit' in template else '' }}"
         tpl_extra_vars: "{{ ('--extra-vars ' + template.extra_vars | to_yaml | quote ) if 'extra_vars' in template else '' }}"
       register: awx_template_result
 
