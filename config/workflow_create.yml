@@ -1,6 +1,26 @@
 ---
 - block:
 
+    - block:
+
+        - name: query existing credentials
+          command: awx-cli credential list -f json
+          register: credential_query
+
+        - name: register existing credentials
+          set_fact:
+            credential_data: "{{ credential_query.stdout | from_json }}"
+
+        - name: build workflow dict
+          set_fact:
+            credential_dict: "{{ (credential_dict | default({})) | combine({ credential_item.name: { credential_item.kind: credential_item.id } }, recursive=True) }}"
+          loop_control:
+            loop_var: credential_item
+            label: "{{ credential_item.name }}"
+          loop: "{{ credential_data.results }}"
+
+      when: "'credentials' in workflow"
+
     - name: detect child workflows
       set_fact:
         child_workflows: "{{ child_workflows | default(False) or (item.type | default('job') != 'job') }}"
@@ -12,7 +32,7 @@
           command: awx-cli workflow list -f json
           register: workflow_query
 
-        - name: decode existing workflows
+        - name: register existing workflows
           set_fact:
             workflow_data: "{{ workflow_query.stdout | from_json }}"
 
@@ -106,7 +126,7 @@
         workflow_node_parent_id: "{{ workflow_assoc.1 }}"
       loop: "{{ node_associations }}"
 
-    - name: associate workflow node credentials
+    - name: associate workflow credentials
       command: "awx-cli node associate_credential --node {{ workflow_node_id }} --credential {{ workflow_node_credential }}"
       loop_control:
         loop_var: workflow_credential
@@ -117,7 +137,9 @@
         workflow_node_name: "{{ workflow_node.name }}"
         workflow_node_id: "{{ [workflow_node_name] | map('extract', workflow_node_map)| list | head }}"
         workflow_node_credential: "{{ workflow_credential.1 }}"
-      loop: "{{ workflow.nodes | subelements('credentials', 'skip_missing=yes') }}"
+        workflow_node_credential_manage: "{{ workflow_node.credentials_manage | default('yes') }}"
+      loop: "{{ workflow.nodes | product(workflow.credentials | default([])) | list }}"
+      when: workflow_node_credential_manage | bool
 
     - name: add workflow roles
       command: "awx-cli role {{ grant_action }} --workflow {{ workflow.name }} --type {{ permission.role }} --team {{ permission.team }}"
