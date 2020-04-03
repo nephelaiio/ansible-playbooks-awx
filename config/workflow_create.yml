@@ -1,20 +1,30 @@
 ---
 - block:
 
-    - name: query existing workflows
-      command: awx-cli workflow list -f json
-      register: workflow_query
-
-    - set_fact:
-        workflow_data: "{{ workflow_query.stdout | from_json }}"
-
-    - name: build workflow dict
+    - name: detect child workflows
       set_fact:
-        workflow_dict: "{{ (workflow_dict | default({})) | combine({ workflow_item.name: workflow_item.id }) }}"
-      loop_control:
-        loop_var: workflow_item
-        label: "{{ workflow_item.name }}"
-      loop: "{{ workflow_data.results }}"
+        child_workflows: "{{ child_workflows | default(False) or (item.type | default('job') != 'job') }}"
+      loop: "{{ workflow.nodes }}"
+
+    - block:
+
+        - name: query existing workflows
+          command: awx-cli workflow list -f json
+          register: workflow_query
+
+        - name: decode existing workflows
+          set_fact:
+            workflow_data: "{{ workflow_query.stdout | from_json }}"
+
+        - name: build workflow dict
+          set_fact:
+            workflow_dict: "{{ (workflow_dict | default({})) | combine({ workflow_item.name: workflow_item.id }) }}"
+          loop_control:
+            loop_var: workflow_item
+            label: "{{ workflow_item.name }}"
+          loop: "{{ workflow_data.results }}"
+
+      when: child_workflows | bool
 
     - name: build workflow configuration options - {{ workflow.name }}
       set_fact:
@@ -33,17 +43,20 @@
       command: >
         awx-cli node create -f json -W {{ workflow.name }}
           {{ workflow_node_template }}
-          {{ workflow_node_inventory }}
+          {{ workflow_node_inventory_manage | ternary(workflow_node_inventory, '') }}
           {{ workflow_node_jobtags }}
           {{ workflow_node_skiptags }}
       loop_control:
         loop_var: workflow_node
         label: "{{ workflow.name}} / {{ workflow_node.name }}"
       vars:
-        workflow_node_inventory: "{{ ('--inventory ' + workflow_node.inventory | string | quote) if 'inventory' in workflow_node else '' }}"
+        workflow_inventory: "{{ ('--inventory ' + workflow.inventory | string | quote) if 'inventory' in workflow else '' }}"
+        workflow_node_inventory_manage: "{{ (workflow_node.inventory_manage | default('yes')) | bool }}"
+        workflow_node_inventory: "{{ ('--inventory ' + workflow_node.inventory | string | quote) if 'inventory' in workflow_node else workflow_inventory }}"
         workflow_node_jobtags: "{{ ('--job-tags ' + ([workflow_node.job_tags] | flatten | join(',') | quote)) if 'job_tags' in workflow_node else '' }}"
         workflow_node_skiptags: "{{ ('--skip-tags ' + ([workflow_node.skip_tags] | flatten | join(',') | quote)) if 'skip_tags' in workflow_node else '' }}"
-        workflow_node_template: "{{ ('--job-template ' + workflow_node.template | string | quote) if (workflow_node.type | default('job') == 'job') else ('--unified-job-template ' + (workflow_dict[workflow_node.template] | string)) }}"
+        workflow_node_job_template: "{{ '--job-template ' + workflow_node.template | string | quote }}"
+        workflow_node_template: "{{ workflow_node_job_template if (workflow_node.type | default('job') == 'job') else ('--unified-job-template ' + (workflow_dict[workflow_node.template] | string)) }}"
       loop: "{{ workflow.nodes }}"
       register: workflow_nodes
 
