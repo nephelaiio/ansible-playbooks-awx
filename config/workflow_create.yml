@@ -23,7 +23,9 @@
 
     - name: detect child workflows
       set_fact:
-        child_workflows: "{{ child_workflows | default(False) or (item.type | default('job') != 'job') }}"
+        child_workflows: "{{ child_workflows | default(False) or (workflow_item.type | default('job') != 'job') }}"
+      loop_control:
+        loop_var: workflow_item
       loop: "{{ workflow.nodes }}"
 
     - block:
