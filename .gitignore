@@ -15,5 +15,6 @@ resources/**
 **/*.pyc
 .python-version
 inventory/artifacts/
-/credentials/**
-/library/**
+credentials/**
+library/**
+submodules/**
