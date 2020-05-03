@@ -53,6 +53,7 @@
         workflow_name: "-n {{ workflow.name | string | quote }}"
         workflow_description: "{{ ('--description ' + workflow.description | string | quote) if 'description' in workflow else '' }}"
         workflow_org: "{{ '--organization ' + organization.name | string | quote }}"
+        workflow_extra_vars: "{{ ('--extra-vars ' + workflow.extra_vars | to_yaml | quote ) if 'extra_vars' in workflow else '' }}"
 
     - name: build workflow creation command - {{ workflow.name }}
       set_fact:
