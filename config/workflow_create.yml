@@ -25,6 +25,7 @@
       set_fact:
         child_workflows: "{{ child_workflows | default(False) or (workflow_item.type | default('job') != 'job') }}"
       loop_control:
+        label: "{{ workflow_item.name }}"
         loop_var: workflow_item
       loop: "{{ workflow.nodes }}"
 
@@ -98,7 +99,7 @@
 
     - name: build workflow nodes associations
       set_fact:
-        node_associations: "{{ node_associations | union([workflow_node_spec] | product([workflow_node_parent_id] | flatten) | list) }}"
+        node_associations: "{{ node_associations | union([workflow_node_spec] | product([workflow_node_parent_ids] | flatten) | list) }}"
       loop_control:
         loop_var: workflow_node
         label: "{{ workflow.name }} / {{ workflow_node_name }}"
@@ -107,7 +108,7 @@
         workflow_node_name: "{{ workflow_node.name }}"
         workflow_node_id: "{{ [workflow_node_name] | map('extract', workflow_node_map)| list | head }}"
         workflow_node_parent: "{{ ([workflow_node.parent] | flatten) if 'parent' in workflow_node else [] }}"
-        workflow_node_parent_id: "{{ (workflow_node_parent | map('extract', workflow_node_map) | list | head) if workflow_node_parent != [] else [] }}"
+        workflow_node_parent_ids: "{{ (workflow_node_parent | map('extract', workflow_node_map) | list) if workflow_node_parent != [] else [] }}"
         workflow_node_parent_type: "{{ workflow_node.parent_type | default('success') }}"
         workflow_node_spec:
           workflow_node_id: "{{ workflow_node_id }}"
