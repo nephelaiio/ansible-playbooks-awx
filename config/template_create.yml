@@ -41,7 +41,7 @@
         tpl_askvars: "{{ ('--ask-variables-on-launch ' + template.ask_vars | string | quote) if 'ask_vars' in template else '' }}"
         tpl_asklimit: "{{ ('--ask-limit-on-launch ' + template.ask_limit | string | quote) if 'ask_limit' in template else '' }}"
         tpl_extra_vars: "{{ ('--extra-vars ' + template.extra_vars | to_yaml | quote ) if 'extra_vars' in template else '' }}"
-        tpl_become_enabled: "{{ ('--become-enabled ' + template.become | to_yaml | quote ) if 'become' in template else '' }}"
+        tpl_become_enabled: "{{ ('--become-enabled ' + template.become_enabled | string | to_yaml ) if 'become_enabled' in template else '' }}"
       register: awx_template_result
 
     - name: register template object - {{ template.name }}
