@@ -58,7 +58,7 @@
 
     - name: build workflow creation command - {{ workflow.name }}
       set_fact:
-        workflow_source_create_args: "{{ workflow_name }} {{ workflow_description }} {{ workflow_org }}"
+        workflow_source_create_args: "{{ workflow_name }} {{ workflow_description }} {{ workflow_org }} {{ workflow_extra_vars }}"
 
     - name: create workflow - {{ workflow.name }}
       command: "awx-cli workflow create {{ workflow_source_create_args }}"
