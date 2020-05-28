@@ -1,157 +1,152 @@
 ---
 - block:
 
-    - block:
+    - name: query existing credentials
+      command: awx-cli credential list -f json
+      register: credential_query
 
-        - name: query existing credentials
-          command: awx-cli credential list -f json
-          register: credential_query
-
-        - name: register existing credentials
-          set_fact:
-            credential_data: "{{ credential_query.stdout | from_json }}"
-
-        - name: build workflow dict
-          set_fact:
-            credential_dict: "{{ (credential_dict | default({})) | combine({ credential_item.name: { credential_item.kind: credential_item.id } }, recursive=True) }}"
-          loop_control:
-            loop_var: credential_item
-            label: "{{ credential_item.name }}"
-          loop: "{{ credential_data.results }}"
-
-      when: "'credentials' in workflow"
-
-    - name: detect child workflows
+    - name: register existing credentials
       set_fact:
-        child_workflows: "{{ child_workflows | default(False) or (workflow_item.type | default('job') != 'job') }}"
+        credential_data: "{{ credential_query.stdout | from_json }}"
+
+    - name: build workflow dict
+      set_fact:
+        credential_dict: "{{ (credential_dict | default({})) | combine({ credential_item.name: { credential_item.kind: credential_item.id } }, recursive=True) }}"
       loop_control:
-        label: "{{ workflow_item.name }}"
+        loop_var: credential_item
+        label: "{{ credential_item.name }}"
+      loop: "{{ credential_data.results }}"
+
+  when: "'credentials' in workflow"
+
+- name: detect child workflows
+  set_fact:
+    child_workflows: "{{ child_workflows | default(False) or (workflow_item.type | default('job') != 'job') }}"
+  loop_control:
+    label: "{{ workflow_item.name }}"
+    loop_var: workflow_item
+  loop: "{{ workflow.nodes }}"
+
+- block:
+
+    - name: query existing workflows
+      command: awx-cli workflow list -f json
+      register: workflow_query
+
+    - name: register existing workflows
+      set_fact:
+        workflow_data: "{{ workflow_query.stdout | from_json }}"
+
+    - name: build workflow dict
+      set_fact:
+        workflow_dict: "{{ (workflow_dict | default({})) | combine({ workflow_item.name: workflow_item.id }) }}"
+      loop_control:
         loop_var: workflow_item
-      loop: "{{ workflow.nodes }}"
+        label: "{{ workflow_item.name }}"
+      loop: "{{ workflow_data.results }}"
 
-    - block:
+  when: child_workflows | bool
 
-        - name: query existing workflows
-          command: awx-cli workflow list -f json
-          register: workflow_query
+- name: build workflow configuration options - {{ workflow.name }}
+  set_fact:
+    workflow_name: "-n {{ workflow.name | string | quote }}"
+    workflow_description: "{{ ('--description ' + workflow.description | string | quote) if 'description' in workflow else '' }}"
+    workflow_org: "{{ '--organization ' + organization.name | string | quote }}"
+    workflow_extra_vars: "{{ ('--extra-vars ' + workflow.extra_vars | to_yaml | quote ) if 'extra_vars' in workflow else '' }}"
 
-        - name: register existing workflows
-          set_fact:
-            workflow_data: "{{ workflow_query.stdout | from_json }}"
+- name: build workflow creation command - {{ workflow.name }}
+  set_fact:
+    workflow_source_create_args: "{{ workflow_name }} {{ workflow_description }} {{ workflow_org }} {{ workflow_extra_vars }}"
 
-        - name: build workflow dict
-          set_fact:
-            workflow_dict: "{{ (workflow_dict | default({})) | combine({ workflow_item.name: workflow_item.id }) }}"
-          loop_control:
-            loop_var: workflow_item
-            label: "{{ workflow_item.name }}"
-          loop: "{{ workflow_data.results }}"
+- name: create workflow - {{ workflow.name }}
+  command: "awx-cli workflow create {{ workflow_source_create_args }}"
 
-      when: child_workflows | bool
+- name: create workflow nodes - {{ workflow.name }}
+  command: >
+    awx-cli node create -f json -W {{ workflow.name }}
+      {{ workflow_node_template }}
+      {{ workflow_node_inventory_manage | ternary(workflow_node_inventory, '') }}
+      {{ workflow_node_jobtags }}
+      {{ workflow_node_skiptags }}
+  loop_control:
+    loop_var: workflow_node
+    label: "{{ workflow.name}} / {{ workflow_node.name }}"
+  vars:
+    workflow_inventory: "{{ ('--inventory ' + workflow.inventory | string | quote) if 'inventory' in workflow else '' }}"
+    workflow_node_inventory_manage: "{{ (workflow_node.inventory_manage | default('yes')) | bool }}"
+    workflow_node_inventory: "{{ ('--inventory ' + workflow_node.inventory | string | quote) if 'inventory' in workflow_node else workflow_inventory }}"
+    workflow_node_jobtags: "{{ ('--job-tags ' + ([workflow_node.job_tags] | flatten | join(',') | quote)) if 'job_tags' in workflow_node else '' }}"
+    workflow_node_skiptags: "{{ ('--skip-tags ' + ([workflow_node.skip_tags] | flatten | join(',') | quote)) if 'skip_tags' in workflow_node else '' }}"
+    workflow_node_job_template: "{{ '--job-template ' + workflow_node.template | string | quote }}"
+    workflow_node_template: "{{ workflow_node_job_template if (workflow_node.type | default('job') == 'job') else ('--unified-job-template ' + (workflow_dict[workflow_node.template] | string)) }}"
+  loop: "{{ workflow.nodes }}"
+  register: workflow_nodes
 
-    - name: build workflow configuration options - {{ workflow.name }}
-      set_fact:
-        workflow_name: "-n {{ workflow.name | string | quote }}"
-        workflow_description: "{{ ('--description ' + workflow.description | string | quote) if 'description' in workflow else '' }}"
-        workflow_org: "{{ '--organization ' + organization.name | string | quote }}"
-        workflow_extra_vars: "{{ ('--extra-vars ' + workflow.extra_vars | to_yaml | quote ) if 'extra_vars' in workflow else '' }}"
+- name: register node names and operation results
+  set_fact:
+    workflow_node_names: "{{ workflow_nodes.results | map(attribute='workflow_node') | map(attribute='name') | list }}"
+    workflow_node_ids: "{{ workflow_nodes.results | map(attribute='stdout') | map('from_json') | map(attribute='id') | list }}"
 
-    - name: build workflow creation command - {{ workflow.name }}
-      set_fact:
-        workflow_source_create_args: "{{ workflow_name }} {{ workflow_description }} {{ workflow_org }} {{ workflow_extra_vars }}"
+- name: register node name id associations
+  set_fact:
+    workflow_node_pairs: "{{ workflow_node_names | zip(workflow_node_ids) | list }}"
 
-    - name: create workflow - {{ workflow.name }}
-      command: "awx-cli workflow create {{ workflow_source_create_args }}"
+- name: clear node associations
+  set_fact:
+    node_associations: []
 
-    - name: create workflow nodes - {{ workflow.name }}
-      command: >
-        awx-cli node create -f json -W {{ workflow.name }}
-          {{ workflow_node_template }}
-          {{ workflow_node_inventory_manage | ternary(workflow_node_inventory, '') }}
-          {{ workflow_node_jobtags }}
-          {{ workflow_node_skiptags }}
-      loop_control:
-        loop_var: workflow_node
-        label: "{{ workflow.name}} / {{ workflow_node.name }}"
-      vars:
-        workflow_inventory: "{{ ('--inventory ' + workflow.inventory | string | quote) if 'inventory' in workflow else '' }}"
-        workflow_node_inventory_manage: "{{ (workflow_node.inventory_manage | default('yes')) | bool }}"
-        workflow_node_inventory: "{{ ('--inventory ' + workflow_node.inventory | string | quote) if 'inventory' in workflow_node else workflow_inventory }}"
-        workflow_node_jobtags: "{{ ('--job-tags ' + ([workflow_node.job_tags] | flatten | join(',') | quote)) if 'job_tags' in workflow_node else '' }}"
-        workflow_node_skiptags: "{{ ('--skip-tags ' + ([workflow_node.skip_tags] | flatten | join(',') | quote)) if 'skip_tags' in workflow_node else '' }}"
-        workflow_node_job_template: "{{ '--job-template ' + workflow_node.template | string | quote }}"
-        workflow_node_template: "{{ workflow_node_job_template if (workflow_node.type | default('job') == 'job') else ('--unified-job-template ' + (workflow_dict[workflow_node.template] | string)) }}"
-      loop: "{{ workflow.nodes }}"
-      register: workflow_nodes
+- name: build workflow nodes associations
+  set_fact:
+    node_associations: "{{ node_associations | union([workflow_node_spec] | product([workflow_node_parent_ids] | flatten) | list) }}"
+  loop_control:
+    loop_var: workflow_node
+    label: "{{ workflow.name }} / {{ workflow_node_name }}"
+  vars:
+    workflow_node_map: "{{ dict(workflow_node_pairs) }}"
+    workflow_node_name: "{{ workflow_node.name }}"
+    workflow_node_id: "{{ [workflow_node_name] | map('extract', workflow_node_map)| list | head }}"
+    workflow_node_parent: "{{ ([workflow_node.parent] | flatten) if 'parent' in workflow_node else [] }}"
+    workflow_node_parent_ids: "{{ (workflow_node_parent | map('extract', workflow_node_map) | list) if workflow_node_parent != [] else [] }}"
+    workflow_node_parent_type: "{{ workflow_node.parent_type | default('success') }}"
+    workflow_node_spec:
+      workflow_node_id: "{{ workflow_node_id }}"
+      workflow_node_parent_type: "{{ workflow_node_parent_type }}"
+      workflow_node_name: "{{ workflow_node_name }}"
+  loop: "{{ workflow.nodes }}"
+  when: workflow_node_parent != []
 
-    - name: register node names and operation results
-      set_fact:
-        workflow_node_names: "{{ workflow_nodes.results | map(attribute='workflow_node') | map(attribute='name') | list }}"
-        workflow_node_ids: "{{ workflow_nodes.results | map(attribute='stdout') | map('from_json') | map(attribute='id') | list }}"
+- name: associate workflow nodes
+  command: "awx-cli node associate_{{ workflow_node_parent_type }}_node -W {{ workflow.name }} {{ workflow_node_parent_id }} {{ workflow_node_id }}"
+  loop_control:
+    loop_var: workflow_assoc
+    label: "{{ workflow.name }} / {{ workflow_node_name }}"
+  vars:
+    workflow_node_spec: "{{ workflow_assoc.0 }}"
+    workflow_node_name: "{{ workflow_node_spec.workflow_node_name }}"
+    workflow_node_id: "{{ workflow_node_spec.workflow_node_id }}"
+    workflow_node_parent_type: "{{ workflow_node_spec.workflow_node_parent_type }}"
+    workflow_node_parent_id: "{{ workflow_assoc.1 }}"
+  loop: "{{ node_associations }}"
 
-    - name: register node name id associations
-      set_fact:
-        workflow_node_pairs: "{{ workflow_node_names | zip(workflow_node_ids) | list }}"
+- name: associate workflow credentials
+  command: "awx-cli node associate_credential --node {{ workflow_node_id }} --credential {{ workflow_node_credential }}"
+  loop_control:
+    loop_var: workflow_credential
+    label: "{{ workflow.name }} / {{ workflow_node_name }} / {{ workflow_node_credential }}"
+  vars:
+    workflow_node: "{{ workflow_credential.0 }}"
+    workflow_node_map: "{{ dict(workflow_node_pairs) }}"
+    workflow_node_name: "{{ workflow_node.name }}"
+    workflow_node_id: "{{ [workflow_node_name] | map('extract', workflow_node_map)| list | head }}"
+    workflow_node_credential: "{{ workflow_credential.1 }}"
+    workflow_node_credential_manage: "{{ workflow_node.credentials_manage | default('yes') }}"
+  loop: "{{ workflow.nodes | product(workflow.credentials | default([])) | list }}"
+  when: workflow_node_credential_manage | bool
 
-    - name: clear node associations
-      set_fact:
-        node_associations: []
-
-    - name: build workflow nodes associations
-      set_fact:
-        node_associations: "{{ node_associations | union([workflow_node_spec] | product([workflow_node_parent_ids] | flatten) | list) }}"
-      loop_control:
-        loop_var: workflow_node
-        label: "{{ workflow.name }} / {{ workflow_node_name }}"
-      vars:
-        workflow_node_map: "{{ dict(workflow_node_pairs) }}"
-        workflow_node_name: "{{ workflow_node.name }}"
-        workflow_node_id: "{{ [workflow_node_name] | map('extract', workflow_node_map)| list | head }}"
-        workflow_node_parent: "{{ ([workflow_node.parent] | flatten) if 'parent' in workflow_node else [] }}"
-        workflow_node_parent_ids: "{{ (workflow_node_parent | map('extract', workflow_node_map) | list) if workflow_node_parent != [] else [] }}"
-        workflow_node_parent_type: "{{ workflow_node.parent_type | default('success') }}"
-        workflow_node_spec:
-          workflow_node_id: "{{ workflow_node_id }}"
-          workflow_node_parent_type: "{{ workflow_node_parent_type }}"
-          workflow_node_name: "{{ workflow_node_name }}"
-      loop: "{{ workflow.nodes }}"
-      when: workflow_node_parent != []
-
-    - name: associate workflow nodes
-      command: "awx-cli node associate_{{ workflow_node_parent_type }}_node -W {{ workflow.name }} {{ workflow_node_parent_id }} {{ workflow_node_id }}"
-      loop_control:
-        loop_var: workflow_assoc
-        label: "{{ workflow.name }} / {{ workflow_node_name }}"
-      vars:
-        workflow_node_spec: "{{ workflow_assoc.0 }}"
-        workflow_node_name: "{{ workflow_node_spec.workflow_node_name }}"
-        workflow_node_id: "{{ workflow_node_spec.workflow_node_id }}"
-        workflow_node_parent_type: "{{ workflow_node_spec.workflow_node_parent_type }}"
-        workflow_node_parent_id: "{{ workflow_assoc.1 }}"
-      loop: "{{ node_associations }}"
-
-    - name: associate workflow credentials
-      command: "awx-cli node associate_credential --node {{ workflow_node_id }} --credential {{ workflow_node_credential }}"
-      loop_control:
-        loop_var: workflow_credential
-        label: "{{ workflow.name }} / {{ workflow_node_name }} / {{ workflow_node_credential }}"
-      vars:
-        workflow_node: "{{ workflow_credential.0 }}"
-        workflow_node_map: "{{ dict(workflow_node_pairs) }}"
-        workflow_node_name: "{{ workflow_node.name }}"
-        workflow_node_id: "{{ [workflow_node_name] | map('extract', workflow_node_map)| list | head }}"
-        workflow_node_credential: "{{ workflow_credential.1 }}"
-        workflow_node_credential_manage: "{{ workflow_node.credentials_manage | default('yes') }}"
-      loop: "{{ workflow.nodes | product(workflow.credentials | default([])) | list }}"
-      when: workflow_node_credential_manage | bool
-
-    - name: add workflow roles
-      command: "awx-cli role {{ grant_action }} --workflow {{ workflow.name }} --type {{ permission.role }} --team {{ permission.team }}"
-      vars:
-        grant_action: "{{ 'grant' if (permission.state | default('present') == 'present') else 'revoke' }}"
-      loop_control:
-        loop_var: permission
-      loop: "{{ workflow.permissions | default([]) }}"
-
-  tags:
-    - workflows
+- name: add workflow roles
+  command: "awx-cli role {{ grant_action }} --workflow {{ workflow.name }} --type {{ permission.role }} --team {{ permission.team }}"
+  vars:
+    grant_action: "{{ 'grant' if (permission.state | default('present') == 'present') else 'revoke' }}"
+  loop_control:
+    loop_var: permission
+  loop: "{{ workflow.permissions | default([]) }}"

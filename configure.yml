@@ -97,7 +97,11 @@
             - schedules
 
         - name: destroy awx workflows
-          include_tasks: config/workflow_destroy.yml
+          include_tasks:
+            file: config/workflow_destroy.yml
+            apply:
+              tags:
+                - workflows
           vars:
             organization: "{{ item.0 }}"
             workflow: "{{ item.1 }}"
@@ -122,7 +126,11 @@
             - templates
 
         - name: destroy awx inventories
-          include_tasks: config/inventory_destroy.yml
+          include_tasks:
+            file: config/inventory_destroy.yml
+            apply:
+              tags:
+                - inventories
           vars:
             organization: "{{ item.0 }}"
             inventory: "{{ item.1 }}"
@@ -130,6 +138,8 @@
             label: "{{ inventory.name }}"
           loop: "{{ awx_organizations | subelements('inventories', skip_missing='yes') }}"
           when: organization.state | default('present') == 'absent' or inventory.state | default('present') == 'absent'
+          tags:
+            - inventories
           no_log: "{{ awx_nolog }}"
 
         - name: destroy awx projects
@@ -144,6 +154,8 @@
             label: "{{ project.name }}"
           loop: "{{ awx_organizations | subelements('projects', skip_missing='yes') }}"
           when: organization.state | default('present') == 'absent' or project.state | default('present') == 'absent'
+          tags:
+            - projects
           no_log: "{{ awx_nolog }}"
 
         - name: destroy awx credentials
@@ -271,7 +283,11 @@
             - credentials
 
         - name: create awx projects
-          include_tasks: config/project_create.yml
+          include_tasks:
+            file: config/project_create.yml
+            apply:
+              tags:
+                - projects
           vars:
             organization: "{{ item.0 }}"
             project: "{{ item.1 }}"
@@ -279,10 +295,16 @@
             label: "{{ project.name }}"
           loop: "{{ awx_organizations | subelements('projects', skip_missing='yes') }}"
           when: organization.state | default('present') == 'present' and project.state | default('present') == 'present'
+          tags:
+            - projects
           no_log: "{{ awx_nolog }}"
 
         - name: create awx inventories
-          include_tasks: config/inventory_create.yml
+          include_tasks:
+            file: config/inventory_create.yml
+            apply:
+              tags:
+                - inventories
           vars:
             organization: "{{ item.0 }}"
             inventory: "{{ item.1 }}"
@@ -290,6 +312,8 @@
             label: "{{ inventory.name }}"
           loop: "{{ awx_organizations | subelements('inventories', skip_missing='yes') }}"
           when: organization.state | default('present') == 'present' and inventory.state | default('present') == 'present'
+          tags:
+            - inventories
           no_log: "{{ awx_nolog }}"
 
         - name: create awx job templates
@@ -305,7 +329,11 @@
             - templates
 
         - name: create awx workflows
-          include_tasks: config/workflow_create.yml
+          include_tasks:
+            file: config/workflow_create.yml
+            apply:
+              tags:
+                - workflows
           vars:
             organization: "{{ item.0 }}"
             workflow: "{{ item.1 }}"
