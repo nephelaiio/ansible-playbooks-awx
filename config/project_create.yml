@@ -25,6 +25,3 @@
 - name: create project - {{ project.name }}
   command: "awx-cli project create --monitor --organization {{ organization.name }} {{ project_scm_update_cache_timeout }} {{ project_source_create_args }} --force-on-exists"
   changed_when: false
-
-- name: update project - {{ project.name }}
-  command: "awx-cli project update {{ project_name }}"
