@@ -10,7 +10,6 @@
     docker_pip_helpers:
       - docker
       - docker-compose
-
     host_port: "{{ awx_container_port | default('80') }}"
     dockerhub_version: "{{ awx_release | default('8.0.0') }}"
     dockerhub_base: ansible
@@ -31,9 +30,6 @@
     rabbitmq_password: "{{ awx_rabbitmq_pass}}"
     rabbitmq_erlang_cookie: "{{ awx_rabbitmq_erlangcookie | default('hotfudgepecans') }}"
     docker_log_conf_manage: yes
-    docker_pip_helpers:
-      - docker
-      - docker-compose
 
   roles:
 
