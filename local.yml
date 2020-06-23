@@ -7,9 +7,6 @@
 
   vars:
 
-    docker_pip_helpers:
-      - docker
-      - docker-compose
     host_port: "{{ awx_container_port | default('80') }}"
     dockerhub_version: "{{ awx_release | default('8.0.0') }}"
     dockerhub_base: ansible
@@ -38,6 +35,10 @@
     - nephelaiio.docker
 
   tasks:
+
+    - name: install docker-compose pip
+      pip:
+        name: docker-compose
 
     - name: clean secret compose dir
       file:
