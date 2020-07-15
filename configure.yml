@@ -357,6 +357,8 @@
           loop: "{{ (awx_schedules | default([])) | list }}"
           when: schedule.state | default('present') == 'present'
           no_log: "{{ awx_nolog }}"
+          tags:
+            - schedules
 
         - name: create awx notifications
           include_tasks: config/notification_create.yml
