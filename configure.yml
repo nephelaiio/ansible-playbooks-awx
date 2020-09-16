@@ -113,22 +113,7 @@
           tags:
             - workflows
 
-        - name: changes detection in jobs templates
-          uri:
-            url: "{{ awx_local_url }}/api/v2/job_templates/"
-            method: GET
-            body_format: json
-            user: "{{ awx_admin_user | default('admin') }}"
-            password: "{{ awx_admin_pass }}"
-            force_basic_auth: yes
-            status_code: 204
-          register: list_templates_query
-
-        - name: set template list type dict
-          set_fact:
-            list_templates: "{{ list_templates_query.json.results | list | list_to_dict('kind') }}"
-
-        - name: destroy awx job templates by state
+        - name: destroy absent awx job templates
           command: "awx-cli job_template delete -n {{ template.name | quote }}"
           vars:
             template: "{{ item }}"
@@ -140,7 +125,22 @@
           tags:
             - templates
 
-        - name: destroy awx job templates by modified
+        - name: list job templates
+          uri:
+            url: "{{ awx_local_url }}/api/v2/job_templates/"
+            method: GET
+            body_format: json
+            user: "{{ awx_admin_user | default('admin') }}"
+            password: "{{ awx_admin_pass }}"
+            force_basic_auth: yes
+            status_code: 204
+          register: list_templates_query
+
+        - name: set template list facts
+          set_fact:
+            list_templates: "{{ list_templates_query.json.results | list | list_to_dict('kind') }}"
+
+        - name: destroy modified awx job templates
           command: "awx-cli job_template delete -n {{ template.name | quote }}"
           vars:
             template: "{{ item }}"
