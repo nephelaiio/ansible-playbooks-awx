@@ -133,7 +133,7 @@
             user: "{{ awx_admin_user | default('admin') }}"
             password: "{{ awx_admin_pass }}"
             force_basic_auth: yes
-            status_code: 204
+            status_code: 200
           register: list_templates_query
 
         - name: set template list facts
