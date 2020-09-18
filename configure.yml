@@ -125,7 +125,7 @@
           tags:
             - templates
 
-        - name: list job templates
+        - name: changes detection in jobs templates
           uri:
             url: "{{ awx_local_url }}/api/v2/job_templates/"
             method: GET
