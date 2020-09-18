@@ -147,7 +147,7 @@
           loop_control:
             label: "{{ list_templates.name }}"
           loop: "{{ list_templates | default([]) | list }}"
-          when: not ( list_templates.related.created_by == list_templates.related.modified_by )
+          when: not ( item.related.created_by == item.related.modified_by )
 
         - name: destroy awx inventories
           include_tasks:
