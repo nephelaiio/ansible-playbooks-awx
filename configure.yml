@@ -138,7 +138,7 @@
 
         - name: set template list facts
           set_fact:
-            list_templates: "{{ list_templates_query.json.results | list | list_to_dict('kind') }}"
+            list_templates: "{{ list_templates_query.json.results | list_to_dict('kind') }}"
 
         - name: destroy modified awx job templates
           command: "awx-cli job_template delete -n {{ template.name | quote }}"
