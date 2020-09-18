@@ -19,15 +19,14 @@ install:
   - basher install nephelaiio/basher-awx
 
 stages:
-  - test
-  - deploy
+  - lint
 
 jobs:
   include:
     - script:
         - yamllint ./ -c ./.yamllint
         - flake8 ./
-      stage: test
+      stage: lint
     - script:
         - awx-update-projects --host $AWX_URL --user $AWX_USER --pass $AWX_PASS --repo https://github.com/$TRAVIS_REPO_SLUG.git --debug
         - awx-run-templates --host $AWX_URL --user $AWX_USER --pass $AWX_PASS --debug $AWX_JOB
