@@ -113,7 +113,7 @@
           tags:
             - workflows
 
-        - name: destroy awx job templates
+        - name: destroy absent awx job templates
           command: "awx-cli job_template delete -n {{ template.name | quote }}"
           vars:
             template: "{{ item }}"
@@ -124,6 +124,30 @@
           no_log: "{{ awx_nolog }}"
           tags:
             - templates
+
+        - name: changes detection in jobs templates
+          uri:
+            url: "{{ awx_local_url }}/api/v2/job_templates/"
+            method: GET
+            body_format: json
+            user: "{{ awx_admin_user | default('admin') }}"
+            password: "{{ awx_admin_pass }}"
+            force_basic_auth: yes
+            status_code: 200
+          register: list_templates_query
+
+        - name: set template list facts
+          set_fact:
+            list_templates: "{{ list_templates_query.json.results | list }}"
+
+        - name: destroy modified awx job templates
+          command: "awx-cli job_template delete -n {{ template.name | quote }}"
+          vars:
+            template: "{{ item }}"
+          loop_control:
+            label: "{{ item.name }}"
+          loop: "{{ list_templates | default([]) }}"
+          when: not ( item.related.created_by == item.related.modified_by )
 
         - name: destroy awx inventories
           include_tasks:
