@@ -147,7 +147,7 @@
           loop_control:
             label: "{{ item.name }}"
           loop: "{{ list_templates | default([]) }}"
-          when: not (( item.created | iso8601_to_time | to_datetime("%y-%b-%dT%H:%M") ) == ( item.modified | iso8601_to_time | to_datetime("%y-%b-%dT%H:%M") ))
+          when: not (( item.created | iso8601_to_time | datetimeformat("%y-%b-%dT%H:%M") ) == ( item.modified | iso8601_to_time | datetimeformat("%y-%b-%dT%H:%M") ))
 
         - name: destroy awx inventories
           include_tasks:
