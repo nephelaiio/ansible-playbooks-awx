@@ -48,6 +48,21 @@
       set_fact:
         template_object: "{{ awx_template_result.stdout | from_json }}"
 
+    - name: disassociate stale template credentials - {{ template.name }}
+      command: >
+        awx-cli job_template disassociate_credential --job-template {{ template_object.id }} --credential {{ credential_id }}
+      loop_control:
+        loop_var: tpl_credential
+        label: "{{ credential_name }}"
+      vars:
+        credential_name: "{{ tpl_credential.name }}"
+        credential_id: "{{ tpl_credential.id }}"
+      loop: "{{ template_object.summary_fields.credentials | default([]) }}"
+      when:
+        - not tpl_credential.name in ((template.credentials | default([])) | map(attribute='name') | list )
+
+    - fail:
+
     - name: add template credentials - {{ template.name }}
       uri:
         url: "{{ awx_local_url }}/api/v2/job_templates/{{ template_object.id }}/credentials/"
