@@ -147,7 +147,7 @@
           loop_control:
             label: "{{ item.name }}"
           loop: "{{ list_templates | default([]) }}"
-          when: not (( item.created | truncate(16) ) ) == ( item.modified | truncate(16) ) ))
+          when: not (( item.created | truncate(16) ) == ( item.modified | truncate(16) ))
 
         - name: destroy awx inventories
           include_tasks:
