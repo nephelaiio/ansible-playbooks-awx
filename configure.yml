@@ -127,7 +127,7 @@
 
         - name: changes detection in jobs templates
           uri:
-            url: "{{ awx_local_url }}/api/v2/job_templates/"
+            url: "{{ awx_local_url }}/api/v2/job_templates/?page_size=1000"
             method: GET
             body_format: json
             user: "{{ awx_admin_user | default('admin') }}"
