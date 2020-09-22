@@ -61,8 +61,6 @@
       when:
         - not tpl_credential.name in ((template.credentials | default([])) | map(attribute='name') | list )
 
-    - fail:
-
     - name: add template credentials - {{ template.name }}
       uri:
         url: "{{ awx_local_url }}/api/v2/job_templates/{{ template_object.id }}/credentials/"
