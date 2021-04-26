@@ -202,13 +202,13 @@
 
         - name: manage awx teams
           tower_team:
-            name: "{{ team.name }}"
-            organization: "{{ team.organization }}"
-            state: "{{ team.state | default('present') }}"
+            name: "{{ team.key }}"
+            organization: "{{ team.value.organization }}"
+            state: "{{ team.value.state | default('present') }}"
           loop_control:
             loop_var: team
-            label: "{{ team.name }}"
-          loop: "{{ awx_teams | default([]) }}"
+            label: "{{ team }}"
+          loop: "{{ lookup('dict', awx_teams) }}"
           tags:
             - teams
 
