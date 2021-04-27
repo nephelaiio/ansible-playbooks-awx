@@ -208,7 +208,7 @@
           loop_control:
             loop_var: team
             label: "{{ team }}"
-          loop: "{{ lookup('dict', awx_teams) }}"
+          loop: "{{ lookup('dict', awx_teams, wantlist=True) }}"
           tags:
             - teams
 
