@@ -241,7 +241,7 @@
 
         - name: query credentials
           uri:
-            url: "{{ awx_local_url }}/api/v2/credentials/"
+            url: "{{ awx_local_url }}/api/v2/credentials/?page_size=100"
             method: GET
             body_format: json
             user: "{{ awx_admin_user | default('admin') }}"
