@@ -11,6 +11,9 @@
     awx_nolog: yes
     awx_local_url: "http://localhost:{{ awx_container_port | default('80') }}"
 
+  collections:
+    - awx.awx
+
   roles:
 
     - nephelaiio.plugins
