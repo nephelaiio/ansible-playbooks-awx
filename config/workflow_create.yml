@@ -47,19 +47,25 @@
 
   when: child_workflows | bool
 
-- name: build workflow configuration options - {{ workflow.name }}
-  set_fact:
-    workflow_name: "-n {{ workflow.name | string | quote }}"
-    workflow_description: "{{ ('--description ' + workflow.description | string | quote) if 'description' in workflow else '' }}"
-    workflow_org: "{{ '--organization ' + organization.name | string | quote }}"
-    workflow_extra_vars: "{{ ('--extra-vars ' + workflow.extra_vars | to_yaml | quote ) if 'extra_vars' in workflow else '' }}"
+# - name: build workflow configuration options - {{ workflow.name }}
+#  set_fact:
+#    workflow_name: "-n {{ workflow.name | string | quote }}"
+#    workflow_description: "{{ ('--description ' + workflow.description | string | quote) if 'description' in workflow else '' }}"
+#    workflow_org: "{{ '--organization ' + organization.name | string | quote }}"
+#    workflow_extra_vars: "{{ ('--extra-vars ' + workflow.extra_vars | to_yaml | quote ) if 'extra_vars' in workflow else '' }}"
 
-- name: build workflow creation command - {{ workflow.name }}
-  set_fact:
-    workflow_source_create_args: "{{ workflow_name }} {{ workflow_description }} {{ workflow_org }} {{ workflow_extra_vars }}"
+# - name: build workflow creation command - {{ workflow.name }}
+#  set_fact:
+#    workflow_source_create_args: "{{ workflow_name }} {{ workflow_description }} {{ workflow_org }} {{ workflow_extra_vars }}"
 
 - name: create workflow - {{ workflow.name }}
-  command: "awx-cli workflow create {{ workflow_source_create_args }}"
+#  command: "awx-cli workflow create {{ workflow_source_create_args }}"
+  tower_workflow_job_template:
+    name: "{{ workflow.name | string | quote }}"
+    description: "{{ ( workflow.description | string | quote) if 'description' in workflow else '' }}"
+    organization: "{{ organization.name | string | quote }}"
+    extra_vars: "{{ ( workflow.extra_vars ) if 'extra_vars' in workflow else '{}' }}"
+    ask_limit_on_launch: "{{ ( workflow.ask_limit if 'ask_limit' in workflow else 'false' ) | bool }}"
 
 - name: create workflow nodes - {{ workflow.name }}
   command: >
