@@ -48,7 +48,7 @@
   when: child_workflows | bool
 
 - name: create workflow - {{ workflow.name }}
-  tower_workflow_job_template:
+  awx.awx.tower_workflow_job_template:
     name: "{{ workflow.name | string | quote }}"
     description: "{{ ( workflow.description | string | quote) if 'description' in workflow else '' }}"
     organization: "{{ organization.name | string | quote }}"
