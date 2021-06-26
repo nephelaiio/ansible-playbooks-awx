@@ -1,0 +1,3 @@
+---
+- src: awx.awx
+  version: 19.2.0
