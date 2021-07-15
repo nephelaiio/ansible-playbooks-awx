@@ -22,6 +22,7 @@
           {{ tpl_asklimit }}
           {{ tpl_extra_vars }}
           {{ tpl_become_enabled }}
+          {{ tpl_jobtags }}
       vars:
         tpl_name: "--name {{ template.name | quote }}"
         tpl_description: "{{ ('--description ' + template.description | string | quote) if 'description' in template else '' }}"
