@@ -53,10 +53,11 @@
     workflow_description: "{{ ('--description ' + workflow.description | string | quote) if 'description' in workflow else '' }}"
     workflow_org: "{{ '--organization ' + organization.name | string | quote }}"
     workflow_extra_vars: "{{ ('--extra-vars ' + workflow.extra_vars | to_yaml | quote ) if 'extra_vars' in workflow else '' }}"
+    workflow_ask_extra_vars: "{{ ('--ask-variables-on-launch true ') if 'ask_extra_vars' in workflow else '' }}"
 
 - name: build workflow creation command - {{ workflow.name }}
   set_fact:
-    workflow_source_create_args: "{{ workflow_name }} {{ workflow_description }} {{ workflow_org }} {{ workflow_extra_vars }}"
+    workflow_source_create_args: "{{ workflow_name }} {{ workflow_description }} {{ workflow_org }} {{ workflow_extra_vars }} {{ workflow_ask_extra_vars }}"
 
 - name: create workflow - {{ workflow.name }}
   command: "awx-cli workflow create {{ workflow_source_create_args }}"
