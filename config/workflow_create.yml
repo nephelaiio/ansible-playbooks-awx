@@ -30,7 +30,7 @@
 - block:
 
     - name: query existing workflows
-      command: awx-cli workflow list -f json
+      command: awx-cli workflow list -f json -a
       register: workflow_query
 
     - name: register existing workflows
