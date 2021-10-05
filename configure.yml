@@ -72,8 +72,10 @@
 
         - name: manage awx settings
           tower_settings:
+            controller_host: "{{ awx_local_url | urlsplit('hostname') }}"
             name: "{{ item }}"
             value: "{{ awx_settings[item] | string }}"
+            validate_certs: no
           loop_control:
             label: "{{ item }}"
           loop: "{{ awx_settings.keys() | list | default([]) }}"
