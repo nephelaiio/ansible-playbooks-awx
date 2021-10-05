@@ -9,7 +9,6 @@
 
     awx_cli_conf: ~/.tower_cli.cfg
     awx_nolog: yes
-    awx_local_url: "http://localhost:{{ awx_container_port | default('80') }}"
 
   collections:
 
@@ -20,6 +19,11 @@
     - nephelaiio.plugins
 
   tasks:
+
+    - name: set awx config url
+      set_fact:
+        awx_local_url: "http://localhost:{{ awx_container_port | default('80') }}"
+      when: awx_local_url is undefined
 
     - name: include vars files
       include_vars:
