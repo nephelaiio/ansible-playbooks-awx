@@ -11,6 +11,10 @@
     awx_nolog: yes
     awx_local_url: "http://localhost:{{ awx_container_port | default('80') }}"
 
+  collections:
+
+    - awx.awx
+
   roles:
 
     - nephelaiio.plugins
@@ -162,7 +166,8 @@
           tower_credential:
             organization: "{{ organization.name }}"
             name: "{{ credential.name }}"
-            kind: "{{ credential.kind }}"
+            kind: "{{ credential.kind | default(omit) }}"
+            credential_type: "{{ credential.credential_type | default(omit) }}"
             state: absent
           vars:
             organization: "{{ item.0 }}"
@@ -175,6 +180,38 @@
           tags:
             - credentials
           ignore_errors: yes
+
+        - name: destroy awx galaxy credentials
+          tower_credential:
+            organization: "{{ organization.name }}"
+            name: "{{ galaxy_credential.name }}"
+            credential_type: "{{ galaxy_credential.credential_type }}"
+            state: absent
+          vars:
+            organization: "{{ item.0 }}"
+            galaxy_credential: "{{ item.1 }}"
+          loop_control:
+            label: "{{ galaxy_credential.name }}"
+          loop: "{{ awx_organizations | subelements('galaxy_credentials', skip_missing='yes') }}"
+          when: organization.state | default('present') == 'absent' or galaxy_credential.state | default('present') == 'absent'
+          no_log: "{{ awx_nolog }}"
+          tags:
+            - galaxy_credentials
+
+        - name: destroy awx instance groups
+          tower_instance_group:
+            name: "{{ instance_group.name }}"
+            state: absent
+          vars:
+            organization: "{{ item.0 }}"
+            instance_group: "{{ item.1 }}"
+          loop_control:
+            label: "{{ instance_group.name }}"
+          loop: "{{ awx_organizations | subelements('instance_groups', skip_missing='yes') }}"
+          when: organization.state | default('present') == 'absent' or instance_group.state | default('present') == 'absent'
+          no_log: "{{ awx_nolog }}"
+          tags:
+            - instance_groups
 
         - name: destroy awx organizations
           tower_organization:
@@ -212,11 +249,84 @@
           tags:
             - teams
 
+        - name: create awx galaxy credentials
+          tower_credential:
+            organization: "{{ organization.name }}"
+            name: "{{ galaxy_credential.name }}"
+            state: present
+            credential_type: "{{ galaxy_credential.credential_type }}"
+            inputs: "{{ galaxy_credential.inputs }}"
+          vars:
+            organization: "{{ item.0 }}"
+            galaxy_credential: "{{ item.1 }}"
+          loop_control:
+            label: "{{ galaxy_credential.name }}"
+          loop: "{{ awx_organizations | subelements('galaxy_credentials', skip_missing='yes') }}"
+          when: organization.state | default('present') == 'present' and galaxy_credential.state | default('present') == 'present'
+          no_log: "{{ awx_nolog }}"
+          tags:
+            - galaxy_credentials
+
+        - name: associate awx galaxy credentials
+          tower_organization:
+            name: "{{ organization.name }}"
+            galaxy_credentials: "{{ galaxy_credentials_target }}"
+            state: present
+          vars:
+            organization: "{{ item }}"
+            galaxy_credentials_absent: "{{ organization.galaxy_credentials | rejectattr('state', 'undefined') | rejectattr('state', 'equalto', 'present') | map(attribute='name') | list }}"
+            galaxy_credentials_all: "{{ organization.galaxy_credentials | map(attribute='name') | list }}"
+            galaxy_credentials_target: "{{ galaxy_credentials_all | difference(galaxy_credentials_absent) }}"
+          loop_control:
+            label: "{{ organization.name }}"
+          loop: "{{ awx_organizations | list }}"
+          when:
+            - organization.state | default('present') == 'present'
+            - galaxy_credentials_target | length > 0
+          tags:
+            - galaxy_credentials
+
+        - name: create awx instance groups
+          tower_instance_group:
+            name: "{{ instance_group.name }}"
+            is_container_group: "{{ instance_group.container_group | default('omit') }}"
+            pod_spec_override: "{{ instance_group.pod_spec_override | default('omit') }}"
+            state: present
+          vars:
+            organization: "{{ item.0 }}"
+            instance_group: "{{ item.1 }}"
+          loop_control:
+            label: "{{ instance_group.name }}"
+          loop: "{{ awx_organizations | subelements('instance_groups', skip_missing='yes') }}"
+          when: organization.state | default('present') == 'present' and instance_group.state | default('present') == 'present'
+          no_log: "{{ awx_nolog }}"
+          tags:
+            - instance_groups
+
+        - name: associate awx instance groups
+          tower_organization:
+            name: "{{ organization.name }}"
+            instance_groups: "{{ instance_groups_target }}"
+            state: present
+          vars:
+            organization: "{{ item }}"
+            instance_groups_absent: "{{ organization.instance_groups | rejectattr('state', 'undefined') | rejectattr('state', 'equalto', 'present') | map(attribute='name') | list }}"
+            instance_groups_all: "{{ organization.instance_groups | map(attribute='name') | list }}"
+            instance_groups_target: "{{ instance_groups_all | difference(instance_groups_absent) }}"
+          loop_control:
+            label: "{{ organization.name }}"
+          loop: "{{ awx_organizations | list }}"
+          when:
+            - organization.state | default('present') == 'present'
+            - instance_groups_target | length > 0
+          tags:
+            - instance_groups
+
         - name: create awx credentials
           tower_credential:
             organization: "{{ organization.name }}"
             name: "{{ credential.name }}"
-            kind: "{{ credential.kind }}"
+            kind: "{{ credential.kind | default(omit) }}"
             state: present
             become_password: "{{ credential.become_password | default(omit) }}"
             become_username: "{{ credential.become_username | default(omit) }}"
@@ -276,7 +386,7 @@
           loop: "{{ awx_organizations | subelements('credentials', skip_missing='yes') }}"
           when:
             - organization.state | default('present') == 'present' and credential.state | default('present') == 'present'
-            - credential.kind == 'vault'
+            - "'kind' in credential and credential.kind == 'vault'"
             - "'vault_id' in credential"
           no_log: "{{ awx_nolog }}"
           tags:
