@@ -73,6 +73,8 @@
         - name: manage awx settings
           tower_settings:
             controller_host: "{{ awx_local_url | urlsplit('hostname') }}"
+            controller_username: "{{ awx_admin_user | default('admin') }}"
+            controller_password: "{{ awx_admin_pass }}"
             name: "{{ item }}"
             value: "{{ awx_settings[item] | string }}"
             validate_certs: no
