@@ -264,38 +264,27 @@
           tags:
             - instance_groups
 
-        - name: destroy awx organizations
+        - name: manage awx organizations
           organization:
             controller_host: "{{ awx_local_url | urlsplit('hostname') }}"
             controller_username: "{{ awx_admin_user | default('admin') }}"
             controller_password: "{{ awx_admin_pass }}"
             name: "{{ organization.name }}"
-            state: absent
+            state: "{{ organization.state | default('present') }}"
           vars:
             organization: "{{ item }}"
           loop_control:
             label: "{{ organization.name }}"
           loop: "{{ awx_organizations | list }}"
           when:
-            - organization.state | default('present') == 'absent'
+            - organization.state | default('present')
             - awx_organization_manage | default('yes') | bool
 
-        - fail:
-
-        - name: create awx organizations
-          tower_organization:
-            name: "{{ organization.name }}"
-            state: present
-          vars:
-            organization: "{{ item }}"
-          loop_control:
-            label: "{{ organization.name }}"
-          loop: "{{ awx_organizations | list }}"
-          when: item.state | default('present') == 'present'
-          no_log: "{{ awx_nolog }}"
-
         - name: manage awx teams
-          tower_team:
+          team:
+            controller_host: "{{ awx_local_url | urlsplit('hostname') }}"
+            controller_username: "{{ awx_admin_user | default('admin') }}"
+            controller_password: "{{ awx_admin_pass }}"
             name: "{{ team.key }}"
             organization: "{{ team.value.organization }}"
             state: "{{ team.value.state | default('present') }}"
@@ -303,29 +292,37 @@
             loop_var: team
             label: "{{ team }}"
           loop: "{{ lookup('dict', awx_teams, wantlist=True) }}"
+          when: awx_organization_manage | default('yes') | bool
           tags:
             - teams
 
         - name: create awx galaxy credentials
-          tower_credential:
+          credential:
+            controller_host: "{{ awx_local_url | urlsplit('hostname') }}"
+            controller_username: "{{ awx_admin_user | default('admin') }}"
+            controller_password: "{{ awx_admin_pass }}"
             organization: "{{ organization.name }}"
             name: "{{ galaxy_credential.name }}"
-            state: present
             credential_type: "{{ galaxy_credential.credential_type }}"
             inputs: "{{ galaxy_credential.inputs }}"
+            state: present
           vars:
             organization: "{{ item.0 }}"
             galaxy_credential: "{{ item.1 }}"
           loop_control:
             label: "{{ galaxy_credential.name }}"
           loop: "{{ awx_organizations | subelements('galaxy_credentials', skip_missing='yes') }}"
-          when: organization.state | default('present') == 'present' and galaxy_credential.state | default('present') == 'present'
-          no_log: "{{ awx_nolog }}"
+          when:
+            - organization.state | default('present') == 'present' and galaxy_credential.state | default('present') == 'present'
+            - awx_organization_manage | default('yes') | bool
           tags:
             - galaxy_credentials
 
         - name: associate awx galaxy credentials
-          tower_organization:
+          organization:
+            controller_host: "{{ awx_local_url | urlsplit('hostname') }}"
+            controller_username: "{{ awx_admin_user | default('admin') }}"
+            controller_password: "{{ awx_admin_pass }}"
             name: "{{ organization.name }}"
             galaxy_credentials: "{{ galaxy_credentials_target }}"
             state: present
@@ -340,11 +337,15 @@
           when:
             - organization.state | default('present') == 'present'
             - galaxy_credentials_target | length > 0
+            - awx_organization_manage | default('yes') | bool
           tags:
             - galaxy_credentials
 
         - name: create awx instance groups
-          tower_instance_group:
+          instance_group:
+            controller_host: "{{ awx_local_url | urlsplit('hostname') }}"
+            controller_username: "{{ awx_admin_user | default('admin') }}"
+            controller_password: "{{ awx_admin_pass }}"
             name: "{{ instance_group.name }}"
             is_container_group: "{{ instance_group.container_group | default('omit') }}"
             pod_spec_override: "{{ instance_group.pod_spec_override | default('omit') }}"
@@ -355,13 +356,18 @@
           loop_control:
             label: "{{ instance_group.name }}"
           loop: "{{ awx_organizations | subelements('instance_groups', skip_missing='yes') }}"
-          when: organization.state | default('present') == 'present' and instance_group.state | default('present') == 'present'
+          when:
+            - organization.state | default('present') == 'present' and instance_group.state | default('present') == 'present'
+            - awx_organization_manage | default('yes') | bool
           no_log: "{{ awx_nolog }}"
           tags:
             - instance_groups
 
         - name: associate awx instance groups
-          tower_organization:
+          organization:
+            controller_host: "{{ awx_local_url | urlsplit('hostname') }}"
+            controller_username: "{{ awx_admin_user | default('admin') }}"
+            controller_password: "{{ awx_admin_pass }}"
             name: "{{ organization.name }}"
             instance_groups: "{{ instance_groups_target }}"
             state: present
@@ -376,14 +382,18 @@
           when:
             - organization.state | default('present') == 'present'
             - instance_groups_target | length > 0
+            - awx_organization_manage | default('yes') | bool
           tags:
             - instance_groups
 
         - name: create awx credentials
-          tower_credential:
+          credential:
+            controller_host: "{{ awx_local_url | urlsplit('hostname') }}"
+            controller_username: "{{ awx_admin_user | default('admin') }}"
+            controller_password: "{{ awx_admin_pass }}"
             organization: "{{ organization.name }}"
             name: "{{ credential.name }}"
-            kind: "{{ credential.kind | default(omit) }}"
+            kind: "{{ credential.kind }}"
             state: present
             become_password: "{{ credential.become_password | default(omit) }}"
             become_username: "{{ credential.become_username | default(omit) }}"
@@ -395,59 +405,23 @@
             team: "{{ credential.team | default(omit) }}"
             username: "{{ credential.username | default(omit) }}"
             vault_password: "{{ credential.vault_password | default(omit) }}"
+            inputs: "{{ (credential.kind == 'vault') | ternary(vault_inputs, {}) }}"
           vars:
             organization: "{{ item.0 }}"
             credential: "{{ item.1 }}"
-          loop_control:
-            label: "{{ credential.name }}"
-          loop: "{{ awx_organizations | subelements('credentials', skip_missing='yes') }}"
-          when: organization.state | default('present') == 'present' and credential.state | default('present') == 'present'
-          no_log: "{{ awx_nolog }}"
-          tags:
-            - credentials
-
-        - name: query credentials
-          uri:
-            url: "{{ awx_local_url }}/api/v2/credentials/?page_size=100"
-            method: GET
-            body_format: json
-            user: "{{ awx_admin_user | default('admin') }}"
-            password: "{{ awx_admin_pass }}"
-            force_basic_auth: yes
-            status_code: 200
-          register: credential_query
-          tags:
-            - always
-
-        - name: set credential dict
-          set_fact:
-            awx_credential_dict: "{{ credential_query.json.results | list | list_to_dict('name') }}"
-          tags:
-            - always
-
-        - name: associate credential vault ids
-          command: >
-            awx-cli credential modify
-              -n {{ credential.name }}
-              --credential-type {{ awx_credential_type_dict['vault'].id }}
-              --inputs {{ inputs | to_json | quote }}
-          changed_when: false
-          vars:
-            organization: "{{ item.0 }}"
-            credential: "{{ item.1 }}"
-            inputs:
-              vault_password: "{{ credential.vault_password }}"
-              vault_id: "{{ credential.vault_id }}"
+            vault_inputs:
+              vault_id: "{{ credential.vault_id | default('') }}"
+              vault_password: "{{ credential.vault_password | default('') }}"
           loop_control:
             label: "{{ credential.name }}"
           loop: "{{ awx_organizations | subelements('credentials', skip_missing='yes') }}"
           when:
             - organization.state | default('present') == 'present' and credential.state | default('present') == 'present'
-            - "'kind' in credential and credential.kind == 'vault'"
-            - "'vault_id' in credential"
-          no_log: "{{ awx_nolog }}"
+            - awx_credentials_manage | default('yes') | bool
           tags:
             - credentials
+
+        - fail:
 
         - name: create awx projects
           include_tasks:
