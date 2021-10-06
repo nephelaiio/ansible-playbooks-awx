@@ -1,3 +1,0 @@
----
-- name: destroy notification
-  command: "awx-cli notification_template delete {{ notification.name | quote }}"

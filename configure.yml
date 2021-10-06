@@ -85,79 +85,108 @@
           tags:
             - settings
 
+        - name: destroy awx job schedules
+          schedule:
+            controller_host: "{{ awx_local_url | urlsplit('hostname') }}"
+            controller_username: "{{ awx_admin_user | default('admin') }}"
+            controller_password: "{{ awx_admin_pass }}"
+            name: "{{ schedule.name }}"
+            state: absent
+          vars:
+            schedule: "{{ item }}"
+          loop_control:
+            label: "{{ schedule.name }}"
+          loop: "{{ (awx_schedules | default([])) | list }}"
+          when:
+            - schedule.state | default('present') == 'absent'
+            - awx_schedule_manage | default('yes') | bool
+          tags:
+            - schedules
+
         - name: destroy awx notifications
-          include_tasks: config/notification_destroy.yml
+          notification_template:
+            controller_host: "{{ awx_local_url | urlsplit('hostname') }}"
+            controller_username: "{{ awx_admin_user | default('admin') }}"
+            controller_password: "{{ awx_admin_pass }}"
+            name: "{{ notification.name }}"
+            state: absent
           vars:
             organization: "{{ item.0 }}"
             notification: "{{ item.1 }}"
           loop_control:
             label: "{{ notification.name }}"
           loop: "{{ awx_organizations | subelements('notifications', skip_missing='yes') }}"
-          when: organization.state | default('present') == 'absent' or notification.state | default('present') == 'absent'
-          no_log: "{{ awx_nolog }}"
-
-        - name: destroy awx job schedules
-          include_tasks: config/schedule_destroy.yml
-          vars:
-            schedule: "{{ item }}"
-          loop_control:
-            label: "{{ schedule.name }}"
-          loop: "{{ (awx_schedules | default([])) | list }}"
-          when: schedule.state | default('present') == 'absent'
-          no_log: "{{ awx_nolog }}"
-          tags:
-            - schedules
+          when:
+            - organization.state | default('present') == 'absent' or notification.state | default('present') == 'absent'
+            - awx_notification_manage | default('yes') | bool
 
         - name: destroy awx workflows
-          include_tasks:
-            file: config/workflow_destroy.yml
-            apply:
-              tags:
-                - workflows
+          workflow_job_template:
+            controller_host: "{{ awx_local_url | urlsplit('hostname') }}"
+            controller_username: "{{ awx_admin_user | default('admin') }}"
+            controller_password: "{{ awx_admin_pass }}"
+            name: "{{ workflow.name }}"
+            organization: "{{ organization }}"
+            state: absent
           vars:
             organization: "{{ item.0 }}"
             workflow: "{{ item.1 }}"
           loop_control:
             label: "{{ workflow.name }}"
           loop: "{{ awx_organizations | subelements('workflows', skip_missing='yes') }}"
-          no_log: "{{ awx_nolog }}"
-          when: awx_workflow_manage | default('yes') | bool
+          when:
+            - organization.state | default('present') == 'absent' or workflow.state | default('present') == 'absent'
+            - awx_workflow_manage | default('yes') | bool
           tags:
             - workflows
 
-        - name: destroy absent awx job templates
-          command: "awx-cli job_template delete -n {{ template.name | quote }}"
-          vars:
-            template: "{{ item }}"
-          loop_control:
-            label: "{{ template.name }}"
-          loop: "{{ (awx_templates | default([])) | list }}"
-          when: template.state | default('present') == 'absent'
-          no_log: "{{ awx_nolog }}"
-          tags:
-            - templates
-
-        - name: destroy awx inventories
-          include_tasks:
-            file: config/inventory_destroy.yml
-            apply:
-              tags:
-                - inventories
+        - name: destroy awx inventory sources
+          inventory_source:
+            controller_host: "{{ awx_local_url | urlsplit('hostname') }}"
+            controller_username: "{{ awx_admin_user | default('admin') }}"
+            controller_password: "{{ awx_admin_pass }}"
+            name: "{{ inventory.name }}"
+            inventory: "{{ inventory.name }}"
+            state: absent
           vars:
             organization: "{{ item.0 }}"
             inventory: "{{ item.1 }}"
           loop_control:
             label: "{{ inventory.name }}"
           loop: "{{ awx_organizations | subelements('inventories', skip_missing='yes') }}"
-          when: organization.state | default('present') == 'absent' or inventory.state | default('present') == 'absent'
+          when:
+            - organization.state | default('present') == 'absent' or inventory.state | default('present') == 'absent'
+            - awx_inventory_manage | default('yes') | bool
           tags:
             - inventories
-          no_log: "{{ awx_nolog }}"
+
+        - name: destroy awx inventories
+          inventory:
+            controller_host: "{{ awx_local_url | urlsplit('hostname') }}"
+            controller_username: "{{ awx_admin_user | default('admin') }}"
+            controller_password: "{{ awx_admin_pass }}"
+            name: "{{ inventory.name }}"
+            organization: "{{ organization.name }}"
+            state: absent
+          vars:
+            organization: "{{ item.0 }}"
+            inventory: "{{ item.1 }}"
+          loop_control:
+            label: "{{ inventory.name }}"
+          loop: "{{ awx_organizations | subelements('inventories', skip_missing='yes') }}"
+          when:
+            - organization.state | default('present') == 'absent' or inventory.state | default('present') == 'absent'
+            - awx_inventory_manage | default('yes') | bool
+          tags:
+            - inventories
 
         - name: destroy awx projects
-          tower_project:
-            organization: "{{ organization.name }}"
+          project:
+            controller_host: "{{ awx_local_url | urlsplit('hostname') }}"
+            controller_username: "{{ awx_admin_user | default('admin') }}"
+            controller_password: "{{ awx_admin_pass }}"
             name: "{{ project.name }}"
+            organization: "{{ organization.name }}"
             state: absent
           vars:
             organization: "{{ item.0 }}"
@@ -165,15 +194,19 @@
           loop_control:
             label: "{{ project.name }}"
           loop: "{{ awx_organizations | subelements('projects', skip_missing='yes') }}"
-          when: organization.state | default('present') == 'absent' or project.state | default('present') == 'absent'
+          when:
+            - organization.state | default('present') == 'absent' or project.state | default('present') == 'absent'
+            - awx_project_manage | default('yes') | bool
           tags:
             - projects
-          no_log: "{{ awx_nolog }}"
 
         - name: destroy awx credentials
-          tower_credential:
-            organization: "{{ organization.name }}"
+          credential:
+            controller_host: "{{ awx_local_url | urlsplit('hostname') }}"
+            controller_username: "{{ awx_admin_user | default('admin') }}"
+            controller_password: "{{ awx_admin_pass }}"
             name: "{{ credential.name }}"
+            organization: "{{ organization.name }}"
             kind: "{{ credential.kind | default(omit) }}"
             credential_type: "{{ credential.credential_type | default(omit) }}"
             state: absent
@@ -183,14 +216,19 @@
           loop_control:
             label: "{{ credential.name }}"
           loop: "{{ awx_organizations | subelements('credentials', skip_missing='yes') }}"
-          when: organization.state | default('present') == 'absent' or credential.state | default('present') == 'absent'
+          when:
+            - organization.state | default('present') == 'absent' or credential.state | default('present') == 'absent'
+            - awx_credentials_manage | default('yes') | bool
           no_log: "{{ awx_nolog }}"
           tags:
             - credentials
           ignore_errors: yes
 
         - name: destroy awx galaxy credentials
-          tower_credential:
+          credential:
+            controller_host: "{{ awx_local_url | urlsplit('hostname') }}"
+            controller_username: "{{ awx_admin_user | default('admin') }}"
+            controller_password: "{{ awx_admin_pass }}"
             organization: "{{ organization.name }}"
             name: "{{ galaxy_credential.name }}"
             credential_type: "{{ galaxy_credential.credential_type }}"
@@ -201,28 +239,36 @@
           loop_control:
             label: "{{ galaxy_credential.name }}"
           loop: "{{ awx_organizations | subelements('galaxy_credentials', skip_missing='yes') }}"
-          when: organization.state | default('present') == 'absent' or galaxy_credential.state | default('present') == 'absent'
+          when:
+            - organization.state | default('present') == 'absent' or galaxy_credential.state | default('present') == 'absent'
+            - awx_credentials_manage | default('yes') | bool
           no_log: "{{ awx_nolog }}"
           tags:
             - galaxy_credentials
 
         - name: destroy awx instance groups
-          tower_instance_group:
+          instance_group:
+            controller_host: "{{ awx_local_url | urlsplit('hostname') }}"
+            controller_username: "{{ awx_admin_user | default('admin') }}"
+            controller_password: "{{ awx_admin_pass }}"
             name: "{{ instance_group.name }}"
             state: absent
           vars:
-            organization: "{{ item.0 }}"
             instance_group: "{{ item.1 }}"
           loop_control:
             label: "{{ instance_group.name }}"
           loop: "{{ awx_organizations | subelements('instance_groups', skip_missing='yes') }}"
-          when: organization.state | default('present') == 'absent' or instance_group.state | default('present') == 'absent'
-          no_log: "{{ awx_nolog }}"
+          when:
+            - instance_group.state | default('present') == 'absent'
+            - awx_instance_group_manage | default('yes') | bool
           tags:
             - instance_groups
 
         - name: destroy awx organizations
-          tower_organization:
+          organization:
+            controller_host: "{{ awx_local_url | urlsplit('hostname') }}"
+            controller_username: "{{ awx_admin_user | default('admin') }}"
+            controller_password: "{{ awx_admin_pass }}"
             name: "{{ organization.name }}"
             state: absent
           vars:
@@ -230,8 +276,11 @@
           loop_control:
             label: "{{ organization.name }}"
           loop: "{{ awx_organizations | list }}"
-          when: organization.state | default('present') == 'absent'
-          no_log: "{{ awx_nolog }}"
+          when:
+            - organization.state | default('present') == 'absent'
+            - awx_organization_manage | default('yes') | bool
+
+        - fail:
 
         - name: create awx organizations
           tower_organization:
