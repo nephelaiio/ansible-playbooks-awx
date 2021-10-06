@@ -126,7 +126,7 @@
             controller_username: "{{ awx_admin_user | default('admin') }}"
             controller_password: "{{ awx_admin_pass }}"
             name: "{{ workflow.name }}"
-            organization: "{{ organization }}"
+            organization: "{{ organization.name }}"
             state: absent
           vars:
             organization: "{{ item.0 }}"
