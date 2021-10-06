@@ -51,80 +51,27 @@
 
     - block:
 
-        - name: query credential types
-          uri:
-            url: "{{ awx_local_url }}/api/v2/credential_types/"
-            method: GET
-            body_format: json
-            user: "{{ awx_admin_user | default('admin') }}"
-            password: "{{ awx_admin_pass }}"
-            force_basic_auth: yes
-            status_code: 200
-          register: credential_type_query
-          tags:
-            - always
-
-        - name: set credential type dict
-          set_fact:
-            awx_credential_type_dict: "{{ credential_type_query.json.results | list | list_to_dict('kind') }}"
-          tags:
-            - always
-
         - name: manage awx settings
           tower_settings:
             controller_host: "{{ awx_local_url | urlsplit('hostname') }}"
             controller_username: "{{ awx_admin_user | default('admin') }}"
             controller_password: "{{ awx_admin_pass }}"
+            validate_certs: no
             name: "{{ item }}"
             value: "{{ awx_settings[item] | string }}"
-            validate_certs: no
+          loop: "{{ awx_settings.keys() | list | default([]) }}"
           loop_control:
             label: "{{ item }}"
-          loop: "{{ awx_settings.keys() | list | default([]) }}"
-          ignore_errors: yes
+          register: settings_results
           tags:
             - settings
-
-        - name: destroy awx job schedules
-          schedule:
-            controller_host: "{{ awx_local_url | urlsplit('hostname') }}"
-            controller_username: "{{ awx_admin_user | default('admin') }}"
-            controller_password: "{{ awx_admin_pass }}"
-            name: "{{ schedule.name }}"
-            state: absent
-          vars:
-            schedule: "{{ item }}"
-          loop_control:
-            label: "{{ schedule.name }}"
-          loop: "{{ (awx_schedules | default([])) | list }}"
-          when:
-            - schedule.state | default('present') == 'absent'
-            - awx_schedule_manage | default('yes') | bool
-          tags:
-            - schedules
-
-        - name: destroy awx notifications
-          notification_template:
-            controller_host: "{{ awx_local_url | urlsplit('hostname') }}"
-            controller_username: "{{ awx_admin_user | default('admin') }}"
-            controller_password: "{{ awx_admin_pass }}"
-            name: "{{ notification.name }}"
-            state: absent
-          vars:
-            organization: "{{ item.0 }}"
-            notification: "{{ item.1 }}"
-          loop_control:
-            label: "{{ notification.name }}"
-          loop: "{{ awx_organizations | subelements('notifications', skip_missing='yes') }}"
-          when:
-            - organization.state | default('present') == 'absent' or notification.state | default('present') == 'absent'
-            - awx_notification_manage | default('yes') | bool
 
         - name: destroy awx workflows
           workflow_job_template:
             controller_host: "{{ awx_local_url | urlsplit('hostname') }}"
             controller_username: "{{ awx_admin_user | default('admin') }}"
             controller_password: "{{ awx_admin_pass }}"
+            validate_certs: no
             name: "{{ workflow.name }}"
             organization: "{{ organization.name }}"
             state: absent
@@ -140,11 +87,31 @@
           tags:
             - workflows
 
+        - name: destroy awx job templates
+          job_template:
+            controller_host: "{{ awx_local_url | urlsplit('hostname') }}"
+            controller_username: "{{ awx_admin_user | default('admin') }}"
+            controller_password: "{{ awx_admin_pass }}"
+            validate_certs: no
+            name: "{{ template.name }}"
+            state: absent
+          vars:
+            template: "{{ item }}"
+          loop_control:
+            label: "{{ template.name }}"
+          loop: "{{ (awx_templates | default([])) | list }}"
+          when:
+            - template.state | default('present') == 'absent'
+            - awx_template_manage | default('yes') | bool
+          tags:
+            - templates
+
         - name: destroy awx inventory sources
           inventory_source:
             controller_host: "{{ awx_local_url | urlsplit('hostname') }}"
             controller_username: "{{ awx_admin_user | default('admin') }}"
             controller_password: "{{ awx_admin_pass }}"
+            validate_certs: no
             name: "{{ inventory.name }}"
             inventory: "{{ inventory.name }}"
             state: absent
@@ -165,6 +132,7 @@
             controller_host: "{{ awx_local_url | urlsplit('hostname') }}"
             controller_username: "{{ awx_admin_user | default('admin') }}"
             controller_password: "{{ awx_admin_pass }}"
+            validate_certs: no
             name: "{{ inventory.name }}"
             organization: "{{ organization.name }}"
             state: absent
@@ -185,6 +153,7 @@
             controller_host: "{{ awx_local_url | urlsplit('hostname') }}"
             controller_username: "{{ awx_admin_user | default('admin') }}"
             controller_password: "{{ awx_admin_pass }}"
+            validate_certs: no
             name: "{{ project.name }}"
             organization: "{{ organization.name }}"
             state: absent
@@ -205,6 +174,7 @@
             controller_host: "{{ awx_local_url | urlsplit('hostname') }}"
             controller_username: "{{ awx_admin_user | default('admin') }}"
             controller_password: "{{ awx_admin_pass }}"
+            validate_certs: no
             name: "{{ credential.name }}"
             organization: "{{ organization.name }}"
             kind: "{{ credential.kind | default(omit) }}"
@@ -229,6 +199,7 @@
             controller_host: "{{ awx_local_url | urlsplit('hostname') }}"
             controller_username: "{{ awx_admin_user | default('admin') }}"
             controller_password: "{{ awx_admin_pass }}"
+            validate_certs: no
             organization: "{{ organization.name }}"
             name: "{{ galaxy_credential.name }}"
             credential_type: "{{ galaxy_credential.credential_type }}"
@@ -251,6 +222,7 @@
             controller_host: "{{ awx_local_url | urlsplit('hostname') }}"
             controller_username: "{{ awx_admin_user | default('admin') }}"
             controller_password: "{{ awx_admin_pass }}"
+            validate_certs: no
             name: "{{ instance_group.name }}"
             state: absent
           vars:
@@ -269,6 +241,7 @@
             controller_host: "{{ awx_local_url | urlsplit('hostname') }}"
             controller_username: "{{ awx_admin_user | default('admin') }}"
             controller_password: "{{ awx_admin_pass }}"
+            validate_certs: no
             name: "{{ organization.name }}"
             state: "{{ organization.state | default('present') }}"
           vars:
@@ -277,7 +250,7 @@
             label: "{{ organization.name }}"
           loop: "{{ awx_organizations | list }}"
           when:
-            - organization.state | default('present')
+            - organization.state | default('present') != 'absent'
             - awx_organization_manage | default('yes') | bool
 
         - name: manage awx teams
@@ -285,12 +258,13 @@
             controller_host: "{{ awx_local_url | urlsplit('hostname') }}"
             controller_username: "{{ awx_admin_user | default('admin') }}"
             controller_password: "{{ awx_admin_pass }}"
+            validate_certs: no
             name: "{{ team.key }}"
             organization: "{{ team.value.organization }}"
             state: "{{ team.value.state | default('present') }}"
           loop_control:
             loop_var: team
-            label: "{{ team }}"
+            label: "{{ team.key }}"
           loop: "{{ lookup('dict', awx_teams, wantlist=True) }}"
           when: awx_organization_manage | default('yes') | bool
           tags:
@@ -301,6 +275,7 @@
             controller_host: "{{ awx_local_url | urlsplit('hostname') }}"
             controller_username: "{{ awx_admin_user | default('admin') }}"
             controller_password: "{{ awx_admin_pass }}"
+            validate_certs: no
             organization: "{{ organization.name }}"
             name: "{{ galaxy_credential.name }}"
             credential_type: "{{ galaxy_credential.credential_type }}"
@@ -313,7 +288,8 @@
             label: "{{ galaxy_credential.name }}"
           loop: "{{ awx_organizations | subelements('galaxy_credentials', skip_missing='yes') }}"
           when:
-            - organization.state | default('present') == 'present' and galaxy_credential.state | default('present') == 'present'
+            - organization.state | default('present') != 'absent'
+            - galaxy_credential.state | default('present') != 'absent'
             - awx_organization_manage | default('yes') | bool
           tags:
             - galaxy_credentials
@@ -323,6 +299,7 @@
             controller_host: "{{ awx_local_url | urlsplit('hostname') }}"
             controller_username: "{{ awx_admin_user | default('admin') }}"
             controller_password: "{{ awx_admin_pass }}"
+            validate_certs: no
             name: "{{ organization.name }}"
             galaxy_credentials: "{{ galaxy_credentials_target }}"
             state: present
@@ -335,7 +312,7 @@
             label: "{{ organization.name }}"
           loop: "{{ awx_organizations | list }}"
           when:
-            - organization.state | default('present') == 'present'
+            - organization.state | default('present') != 'absent'
             - galaxy_credentials_target | length > 0
             - awx_organization_manage | default('yes') | bool
           tags:
@@ -346,6 +323,7 @@
             controller_host: "{{ awx_local_url | urlsplit('hostname') }}"
             controller_username: "{{ awx_admin_user | default('admin') }}"
             controller_password: "{{ awx_admin_pass }}"
+            validate_certs: no
             name: "{{ instance_group.name }}"
             is_container_group: "{{ instance_group.container_group | default('omit') }}"
             pod_spec_override: "{{ instance_group.pod_spec_override | default('omit') }}"
@@ -357,7 +335,8 @@
             label: "{{ instance_group.name }}"
           loop: "{{ awx_organizations | subelements('instance_groups', skip_missing='yes') }}"
           when:
-            - organization.state | default('present') == 'present' and instance_group.state | default('present') == 'present'
+            - organization.state | default('present') != 'absent'
+            - instance_group.state | default('present') != 'absent'
             - awx_organization_manage | default('yes') | bool
           no_log: "{{ awx_nolog }}"
           tags:
@@ -368,6 +347,7 @@
             controller_host: "{{ awx_local_url | urlsplit('hostname') }}"
             controller_username: "{{ awx_admin_user | default('admin') }}"
             controller_password: "{{ awx_admin_pass }}"
+            validate_certs: no
             name: "{{ organization.name }}"
             instance_groups: "{{ instance_groups_target }}"
             state: present
@@ -380,7 +360,7 @@
             label: "{{ organization.name }}"
           loop: "{{ awx_organizations | list }}"
           when:
-            - organization.state | default('present') == 'present'
+            - organization.state | default('present') != 'absent'
             - instance_groups_target | length > 0
             - awx_organization_manage | default('yes') | bool
           tags:
@@ -391,10 +371,10 @@
             controller_host: "{{ awx_local_url | urlsplit('hostname') }}"
             controller_username: "{{ awx_admin_user | default('admin') }}"
             controller_password: "{{ awx_admin_pass }}"
+            validate_certs: no
             organization: "{{ organization.name }}"
             name: "{{ credential.name }}"
             kind: "{{ credential.kind }}"
-            state: present
             become_password: "{{ credential.become_password | default(omit) }}"
             become_username: "{{ credential.become_username | default(omit) }}"
             description: "{{ credential.description | default(omit) }}"
@@ -406,6 +386,7 @@
             username: "{{ credential.username | default(omit) }}"
             vault_password: "{{ credential.vault_password | default(omit) }}"
             inputs: "{{ (credential.kind == 'vault') | ternary(vault_inputs, {}) }}"
+            state: present
           vars:
             organization: "{{ item.0 }}"
             credential: "{{ item.1 }}"
@@ -416,65 +397,143 @@
             label: "{{ credential.name }}"
           loop: "{{ awx_organizations | subelements('credentials', skip_missing='yes') }}"
           when:
-            - organization.state | default('present') == 'present' and credential.state | default('present') == 'present'
+            - organization.state | default('present') != 'absent'
+            - credential.state | default('present') != 'absent'
             - awx_credentials_manage | default('yes') | bool
           tags:
             - credentials
 
-        - fail:
-
         - name: create awx projects
-          include_tasks:
-            file: config/project_create.yml
-            apply:
-              tags:
-                - projects
+          project:
+            controller_host: "{{ awx_local_url | urlsplit('hostname') }}"
+            controller_username: "{{ awx_admin_user | default('admin') }}"
+            controller_password: "{{ awx_admin_pass }}"
+            validate_certs: no
+            name: "{{ project.name }}"
+            organization: "{{ organization.name }}"
+            description: "{{ project.description | default(omit) }}"
+            scm_type: "{{ project.scm_type }}"
+            scm_url: "{{ project.scm_url | default(omit) }}"
+            scm_branch: "{{ project.scm_branch | default(omit) }}"
+            scm_credential: "{{ project.scm_credential | default(omit) }}"
+            scm_clean: "{{ project.scm_clean | default(omit) }}"
+            scm_delete_on_update: "{{ project.scm_delete_on_update | default(omit) }}"
+            scm_update_on_launch: "{{ project.scm_update_on_launch | default(omit) }}"
+            scm_update_cache_timeout: "{{ project.scm_update_cache_timeout | default(omit) }}"
+            timeout: "{{ project.job_timeout | default(omit) }}"
+            state: present
           vars:
             organization: "{{ item.0 }}"
             project: "{{ item.1 }}"
           loop_control:
             label: "{{ project.name }}"
           loop: "{{ awx_organizations | subelements('projects', skip_missing='yes') }}"
-          when: organization.state | default('present') == 'present' and project.state | default('present') == 'present'
+          when:
+            - organization.state | default('present') != 'absent'
+            - project.state | default('present') != 'absent'
+            - awx_project_manage | default('yes') | bool
           tags:
             - projects
-          no_log: "{{ awx_nolog }}"
 
         - name: create awx inventories
-          include_tasks:
-            file: config/inventory_create.yml
-            apply:
-              tags:
-                - inventories
+          inventory:
+            controller_host: "{{ awx_local_url | urlsplit('hostname') }}"
+            controller_username: "{{ awx_admin_user | default('admin') }}"
+            controller_password: "{{ awx_admin_pass }}"
+            validate_certs: no
+            name: "{{ inventory.name }}"
+            organization: "{{ organization.name }}"
           vars:
             organization: "{{ item.0 }}"
             inventory: "{{ item.1 }}"
           loop_control:
             label: "{{ inventory.name }}"
           loop: "{{ awx_organizations | subelements('inventories', skip_missing='yes') }}"
-          when: organization.state | default('present') == 'present' and inventory.state | default('present') == 'present'
+          when:
+            - organization.state | default('present') != 'absent'
+            - inventory.state | default('present') != 'absent'
+            - awx_inventory_manage | default('yes') | bool
+          tags:
+            - inventories
+          no_log: "{{ awx_nolog }}"
+
+        - name: create awx inventory sources
+          inventory:
+            controller_host: "{{ awx_local_url | urlsplit('hostname') }}"
+            controller_username: "{{ awx_admin_user | default('admin') }}"
+            controller_password: "{{ awx_admin_pass }}"
+            validate_certs: no
+            name: "{{ inventory.name }}"
+            organization: "{{ organization.name }}"
+          vars:
+            organization: "{{ item.0 }}"
+            inventory: "{{ item.1 }}"
+          loop_control:
+            label: "{{ inventory.name }}"
+          loop: "{{ awx_organizations | subelements('inventories', skip_missing='yes') }}"
+          when:
+            - organization.state | default('present') != 'absent'
+            - inventory.state | default('present') != 'absent'
+            - awx_inventory_manage | default('yes') | bool
           tags:
             - inventories
           no_log: "{{ awx_nolog }}"
 
         - name: create awx job templates
-          include_tasks: config/template_create.yml
+          job_template:
+            controller_host: "{{ awx_local_url | urlsplit('hostname') }}"
+            controller_username: "{{ awx_admin_user | default('admin') }}"
+            controller_password: "{{ awx_admin_pass }}"
+            validate_certs: no
+            name: "{{ template.name }}"
+            project: "{{ template.project }}"
+            playbook: "{{ template.playbook }}"
+            inventory: "{{ template.inventory | default(omit) }}"
+            description: "{{ template.description | default(omit) }}"
+            allow_simultaneous: "{{ template.allow_simultaneous | default(omit) }}"
+            ask_credential_on_launch: "{{ template.ask_credentials | default(omit) }}"
+            ask_inventory_on_launch: "{{ template.ask_inventory | default(omit) }}"
+            ask_limit_on_launch: "{{ template.ask_limit | default(omit) }}"
+            ask_variables_on_launch: "{{ template.ask_vars | default(omit) }}"
+            ask_skip_tags_on_launch: "{{ template.ask_skip_tags | default(omit) }}"
+            become_enabled: "{{ template.become_enabled | default(omit) }}"
+            extra_vars: "{{ template.extra_vars | default(omit) }}"
+            forks: "{{ template.forks | default(omit) }}"
+            job_slice_count: "{{ template.slices | default(1) }}"
+            job_tags: "{{ [template.job_tags | default('')] | flatten | join(',') }}"
+            job_type: "{{ template.job_type | default('run') }}"
+            limit: "{{ template.limit | default(omit) }}"
+            skip_tags: "{{ [template.skip_tags | default('')] | flatten | join(',') }}"
+            timeout: "{{ template.timeout | default(omit) }}"
+            verbosity: "{{ template.verbosity | default(0) }}"
+            credentials: "{{ template.credentials | default([]) | map(attribute='name') | list }}"
           vars:
             template: "{{ item }}"
           loop_control:
             label: "{{ template.name }}"
           loop: "{{ (awx_templates | default([])) | list }}"
-          when: template.state | default('present') == 'present'
-          no_log: "{{ awx_nolog }}"
+          when:
+            - template.state | default('present') != 'absent'
+            - awx_template_manage | default('yes') | bool
           tags:
             - templates
 
-        - name: create awx workflows
-          include_tasks:
-            file: config/workflow_create.yml
-            apply:
-              tags:
-                - workflows
+        - name: manage awx workflows
+          workflow_job_template:
+            controller_host: "{{ awx_local_url | urlsplit('hostname') }}"
+            controller_username: "{{ awx_admin_user | default('admin') }}"
+            controller_password: "{{ awx_admin_pass }}"
+            validate_certs: no
+            name: "{{ workflow.name }}"
+            inventory: "{{ template.inventory | default(omit) }}"
+            description: "{{ workflow.description | default(omit) }}"
+            ask_inventory_on_launch: "{{ workflow.ask_inventory | default(omit) }}"
+            ask_limit_on_launch: "{{ workflow.ask_limit | default(omit) }}"
+            ask_variables_on_launch: "{{ workflow.ask_vars | default(omit) }}"
+            destroy_current_schema: yes
+            extra_vars: "{{ workflow.extra_vars | default(omit) }}"
+            scm_branch: "{{ workflow.branch | default(omit) }}"
+            schema: '{{ workflow.schema | default(omit) }}'
           vars:
             organization: "{{ item.0 }}"
             workflow: "{{ item.1 }}"
@@ -485,48 +544,50 @@
             - organization.state | default('present') == 'present'
             - workflow.state | default('present') == 'present'
             - awx_workflow_manage | default('yes') | bool
-          no_log: "{{ awx_nolog }}"
+            - "'schema' in workflow"
           tags:
             - workflows
 
         - name: create awx job schedules
-          include_tasks: config/schedule_create.yml
+          schedule:
+            controller_host: "{{ awx_local_url | urlsplit('hostname') }}"
+            controller_username: "{{ awx_admin_user | default('admin') }}"
+            controller_password: "{{ awx_admin_pass }}"
+            validate_certs: no
+            name: "{{ schedule.name }}"
+            description: "{{ schedule.description | default(omit) }}"
+            unified_job_template: "{{ schedule.job_template | default(omit) }}"
+            inventory: "{{ schedule.inventory | default(omit) }}"
+            enabled: "{{ schedule.enabled | default('yes') }}"
+            rrule: "{{ schedule.rrule }}"
+            state: absent
           vars:
             schedule: "{{ item }}"
           loop_control:
             label: "{{ schedule.name }}"
           loop: "{{ (awx_schedules | default([])) | list }}"
-          when: schedule.state | default('present') == 'present'
-          no_log: "{{ awx_nolog }}"
+          when:
+            - schedule.state | default('present') != 'absent'
+            - awx_schedule_manage | default('yes') | bool
           tags:
             - schedules
 
-        - name: create awx notifications
-          include_tasks: config/notification_create.yml
-          vars:
-            organization: "{{ item.0 }}"
-            notification: "{{ item.1 }}"
-          loop_control:
-            label: "{{ notification.name }}"
-          loop: "{{ awx_organizations | subelements('notifications', skip_missing='yes') }}"
-          when: organization.state | default('present') == 'present' and notification.state | default('present') == 'present'
-          no_log: "{{ awx_nolog }}"
-          tags:
-            - notifications
-
         - name: manage awx users
-          tower_user:
+          user:
+            controller_host: "{{ awx_local_url | urlsplit('hostname') }}"
+            controller_username: "{{ awx_admin_user | default('admin') }}"
+            controller_password: "{{ awx_admin_pass }}"
+            validate_certs: no
             username: "{{ item.username }}"
             password: "{{ item.password }}"
             first_name: "{{ item.first_name | default(omit) }}"
             last_name: "{{ item.last_name | default(omit) }}"
             email: "{{ item.email | default(omit) }}"
-            superuser: "{{ item.superuser | default(omit) }}"
+            is_superuser: "{{ item.superuser | default(omit) }}"
             state: "{{ item.state | default('present') }}"
           loop_control:
             label: "{{ item.username }}"
           loop: "{{ awx_users | default([]) | list }}"
-          no_log: "{{ awx_nolog }}"
           tags:
             - users
 
