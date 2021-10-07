@@ -525,6 +525,7 @@
             controller_password: "{{ awx_admin_pass }}"
             validate_certs: no
             name: "{{ workflow.name }}"
+            organization: "{{ organization.name }}"
             inventory: "{{ template.inventory | default(omit) }}"
             description: "{{ workflow.description | default(omit) }}"
             ask_inventory_on_launch: "{{ workflow.ask_inventory | default(omit) }}"
