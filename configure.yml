@@ -496,6 +496,7 @@
             ask_limit_on_launch: "{{ template.ask_limit | default(omit) }}"
             ask_variables_on_launch: "{{ template.ask_vars | default(omit) }}"
             ask_skip_tags_on_launch: "{{ template.ask_skip_tags | default(omit) }}"
+            ask_tags_on_launch: "{{ template.ask_tags | default(omit) }}"
             become_enabled: "{{ template.become_enabled | default(omit) }}"
             extra_vars: "{{ template.extra_vars | default(omit) }}"
             forks: "{{ template.forks | default(omit) }}"
@@ -518,26 +519,14 @@
           tags:
             - templates
 
-        - name: manage awx workflows
-          workflow_job_template:
-            controller_host: "{{ awx_local_url | urlsplit('hostname') }}"
-            controller_username: "{{ awx_admin_user | default('admin') }}"
-            controller_password: "{{ awx_admin_pass }}"
-            validate_certs: no
-            name: "{{ workflow.name }}"
-            organization: "{{ organization.name }}"
-            inventory: "{{ template.inventory | default(omit) }}"
-            description: "{{ workflow.description | default(omit) }}"
-            ask_inventory_on_launch: "{{ workflow.ask_inventory | default(omit) }}"
-            ask_limit_on_launch: "{{ workflow.ask_limit | default(omit) }}"
-            ask_variables_on_launch: "{{ workflow.ask_vars | default(omit) }}"
-            destroy_current_schema: yes
-            extra_vars: "{{ workflow.extra_vars | default(omit) }}"
-            scm_branch: "{{ workflow.branch | default(omit) }}"
-            schema: '{{ workflow.schema | default(omit) }}'
+        - name: set awx workflow facts
+          set_fact:
+            _workflows: "{{ (_workflows | default([])) + [_workflow] }}"
           vars:
+            _workflow: "{{ workflow | combine({ 'organization': organization.name, 'nodes': nodes }) }}"
             organization: "{{ item.0 }}"
             workflow: "{{ item.1 }}"
+            nodes: "{{ workflow.nodes | reverse }}"
           loop_control:
             label: "{{ workflow.name }}"
           loop: "{{ awx_organizations | subelements('workflows', skip_missing='yes') }}"
@@ -545,8 +534,62 @@
             - organization.state | default('present') == 'present'
             - workflow.state | default('present') == 'present'
             - awx_workflow_manage | default('yes') | bool
-            - "'schema' in workflow"
+            - workflow.manage | default('yes') | bool
           tags:
+            - workflows
+            - workflow_nodes
+
+        - name: manage awx workflows
+          workflow_job_template:
+            controller_host: "{{ awx_local_url | urlsplit('hostname') }}"
+            controller_username: "{{ awx_admin_user | default('admin') }}"
+            controller_password: "{{ awx_admin_pass }}"
+            validate_certs: no
+            name: "{{ workflow.name }}"
+            organization: "{{ workflow.organization }}"
+            inventory: "{{ workflow.inventory | default(omit) }}"
+            description: "{{ workflow.description | default(omit) }}"
+            ask_inventory_on_launch: "{{ workflow.ask_inventory | default(omit) }}"
+            ask_limit_on_launch: "{{ workflow.ask_limit | default(omit) }}"
+            ask_variables_on_launch: "{{ workflow.ask_extra_vars | default(omit) }}"
+            destroy_current_schema: yes
+            extra_vars: "{{ workflow.extra_vars | default(omit) }}"
+            scm_branch: "{{ workflow.branch | default(omit) }}"
+          loop_control:
+            loop_var: workflow
+            label: "{{ workflow.name }}"
+          loop: "{{ _workflows | default([]) }}"
+          tags:
+            - workflows
+
+        - name: manage awx workflow nodes
+          workflow_job_template_node:
+            controller_host: "{{ awx_local_url | urlsplit('hostname') }}"
+            controller_username: "{{ awx_admin_user | default('admin') }}"
+            controller_password: "{{ awx_admin_pass }}"
+            validate_certs: no
+            organization: "{{ workflow.organization }}"
+            identifier: "{{ node.name }}"
+            workflow_job_template: "{{ workflow.name }}"
+            unified_job_template: "{{ node.template }}"
+            inventory: "{{ node.inventory | default(workflow.inventory) | default(omit) }}"
+            limit: "{{ node.limit | default(omit) }}"
+            job_tags: "{{ node.tags | default(omit) }}"
+            skip_tags: "{{ node.skip_tags | default(omit) }}"
+            extra_data: "{{ node.extra_data | default(omit) }}"
+            credentials: "{{ node.credentials | default(workflow.credentials) | default(omit) }}"
+            success_nodes: "{{ [node.run_success | default([])] | flatten }}"
+            always_nodes: "{{ [node.run_always | default([])] | flatten }}"
+            failure_nodes: "{{ [node.run_failure | default([])] | flatten }}"
+            all_parents_must_converge: yes
+          vars:
+            workflow: "{{ item.0 }}"
+            node: "{{ item.1 }}"
+          loop_control:
+            label: "{{ workflow.name }} - {{ node.name }}"
+          loop: "{{ _workflows | default([]) | subelements('nodes', skip_missing='yes') }}"
+          tags:
+            - workflow_nodes
             - workflows
 
         - name: create awx job schedules
