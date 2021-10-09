@@ -603,7 +603,6 @@
             destroy_current_schema: yes
             extra_vars: "{{ workflow.extra_vars | default(omit) }}"
             scm_branch: "{{ workflow.branch | default(omit) }}"
-            copy_from: "{{ workflow.copy_from | default(omit) }}"
           loop_control:
             loop_var: workflow
             label: "{{ workflow.name }}"
