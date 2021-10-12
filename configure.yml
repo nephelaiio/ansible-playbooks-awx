@@ -576,9 +576,9 @@
             validate_certs: no
             job_templates:
               - "{{ job_template.name }}"
-            target_teams:
-              - "{{ permission.team }}"
+            team: "{{ permission.team }}"
             role: "{{ permission.role }}"
+            state: "{{ permission.state | default('present') }}"
           vars:
             job_template: "{{ item.0 }}"
             permission: "{{ item.1 }}"
@@ -671,9 +671,9 @@
             validate_certs: no
             workflows:
               - "{{ workflow.name }}"
-            target_teams:
-              - "{{ permission.team }}"
+            team: "{{ permission.team }}"
             role: "{{ permission.role }}"
+            state: "{{ permission.state | default('present') }}"
           vars:
             workflow: "{{ item.0 }}"
             permission: "{{ item.1 }}"
