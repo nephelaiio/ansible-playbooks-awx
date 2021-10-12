@@ -533,40 +533,62 @@
             controller_username: "{{ awx_admin_user | default('admin') }}"
             controller_password: "{{ awx_admin_pass }}"
             validate_certs: no
-            name: "{{ template.name }}"
-            project: "{{ template.project }}"
-            playbook: "{{ template.playbook }}"
-            inventory: "{{ template.inventory | default(omit) }}"
-            description: "{{ template.description | default(omit) }}"
-            allow_simultaneous: "{{ template.allow_simultaneous | default(omit) }}"
-            ask_credential_on_launch: "{{ template.ask_credentials | default(omit) }}"
-            ask_inventory_on_launch: "{{ template.ask_inventory | default(omit) }}"
-            ask_limit_on_launch: "{{ template.ask_limit | default(omit) }}"
-            ask_variables_on_launch: "{{ template.ask_vars | default(omit) }}"
-            ask_skip_tags_on_launch: "{{ template.ask_skip_tags | default(omit) }}"
-            ask_tags_on_launch: "{{ template.ask_tags | default(omit) }}"
-            become_enabled: "{{ template.become_enabled | default(omit) }}"
-            extra_vars: "{{ template.extra_vars | default(omit) }}"
-            forks: "{{ template.forks | default(omit) }}"
-            job_slice_count: "{{ template.slices | default(1) }}"
-            job_tags: "{{ [template.job_tags | default('')] | flatten | join(',') }}"
-            job_type: "{{ template.job_type | default('run') }}"
-            limit: "{{ template.limit | default(omit) }}"
-            skip_tags: "{{ [template.skip_tags | default('')] | flatten | join(',') }}"
-            timeout: "{{ template.timeout | default(omit) }}"
-            verbosity: "{{ template.verbosity | default(0) }}"
-            credentials: "{{ template.credentials | default([]) | map(attribute='name') | list }}"
+            name: "{{ job_template.name }}"
+            project: "{{ job_template.project }}"
+            playbook: "{{ job_template.playbook }}"
+            inventory: "{{ job_template.inventory | default(omit) }}"
+            description: "{{ job_template.description | default(omit) }}"
+            allow_simultaneous: "{{ job_template.allow_simultaneous | default(omit) }}"
+            ask_credential_on_launch: "{{ job_template.ask_credentials | default(omit) }}"
+            ask_inventory_on_launch: "{{ job_template.ask_inventory | default(omit) }}"
+            ask_limit_on_launch: "{{ job_template.ask_limit | default(omit) }}"
+            ask_variables_on_launch: "{{ job_template.ask_vars | default(omit) }}"
+            ask_skip_tags_on_launch: "{{ job_template.ask_skip_tags | default(omit) }}"
+            ask_tags_on_launch: "{{ job_template.ask_tags | default(omit) }}"
+            become_enabled: "{{ job_template.become_enabled | default(omit) }}"
+            extra_vars: "{{ job_template.extra_vars | default(omit) }}"
+            forks: "{{ job_template.forks | default(omit) }}"
+            job_slice_count: "{{ job_template.slices | default(1) }}"
+            job_tags: "{{ [job_template.job_tags | default('')] | flatten | join(',') }}"
+            job_type: "{{ job_template.job_type | default('run') }}"
+            limit: "{{ job_template.limit | default(omit) }}"
+            skip_tags: "{{ [job_template.skip_tags | default('')] | flatten | join(',') }}"
+            timeout: "{{ job_template.timeout | default(omit) }}"
+            verbosity: "{{ job_template.verbosity | default(0) }}"
+            credentials: "{{ job_template.credentials | default([]) | map(attribute='name') | list }}"
           vars:
-            template: "{{ item }}"
+            job_template: "{{ item }}"
           loop_control:
-            label: "{{ template.name }}"
+            label: "{{ job_template.name }}"
           loop: "{{ _awx_templates }}"
           when:
-            - template.state | default('present') != 'absent'
+            - job_template.state | default('present') != 'absent'
             - awx_template_manage | default('yes') | bool
           no_log: "{{ awx_nolog }}"
           tags:
             - templates
+
+        - name: manage awx template permissions
+          role:
+            controller_host: "{{ awx_local_url | urlsplit('hostname') }}"
+            controller_username: "{{ awx_admin_user | default('admin') }}"
+            controller_password: "{{ awx_admin_pass }}"
+            validate_certs: no
+            job_templates:
+              - "{{ job_template.name }}"
+            target_teams:
+              - "{{ permission.team }}"
+            role: admin
+          vars:
+            job_template: "{{ item.0 }}"
+            permission: "{{ item.1 }}"
+          loop_control:
+            label: "{{ job_template.name }} - {{ permission.team }}"
+          loop: "{{ _awx_templates | subelements('permissions', skip_missing='yes') }}"
+          no_log: "{{ awx_nolog }}"
+          tags:
+            - templates
+            - permissions
 
         - name: reverse workflow node order
           set_fact:
@@ -584,8 +606,7 @@
             - workflow.manage | default('yes') | bool
           no_log: "{{ awx_nolog }}"
           tags:
-            - workflows
-            - workflow_nodes
+            - always
 
         - name: manage awx workflows
           workflow_job_template:
@@ -641,6 +662,28 @@
           tags:
             - workflow_nodes
             - workflows
+
+        - name: manage awx workflow permissions
+          role:
+            controller_host: "{{ awx_local_url | urlsplit('hostname') }}"
+            controller_username: "{{ awx_admin_user | default('admin') }}"
+            controller_password: "{{ awx_admin_pass }}"
+            validate_certs: no
+            workflows:
+              - "{{ workflow.name }}"
+            target_teams:
+              - "{{ permission.team }}"
+            role: "{{ permission.role }}"
+          vars:
+            workflow: "{{ item.0 }}"
+            permission: "{{ item.1 }}"
+          loop_control:
+            label: "{{ workflow.name }} - {{ permission.team}}"
+          loop: "{{ _workflows | default([]) | subelements('permissions', skip_missing='yes') }}"
+          no_log: "{{ awx_nolog }}"
+          tags:
+            - workflows
+            - permissions
 
         - name: manage awx job schedules
           schedule:
