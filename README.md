@@ -175,4 +175,4 @@ You can test the role directly from sources using command ` molecule test `
 
 ## License
 
-This project is licensed under the terms of the [MIT License](/LICENSE)
+This project is licensed under the terms of the [BSD License](/LICENSE)
