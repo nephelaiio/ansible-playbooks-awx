@@ -578,7 +578,7 @@
               - "{{ job_template.name }}"
             target_teams:
               - "{{ permission.team }}"
-            role: admin
+            role: "{{ permission.role }}"
           vars:
             job_template: "{{ item.0 }}"
             permission: "{{ item.1 }}"
