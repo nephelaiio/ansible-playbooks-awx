@@ -349,47 +349,29 @@
           tags:
             - organizations
 
-        - name: manage awx teams
-          team:
-            controller_host: "{{ awx_local_url | urlsplit('hostname') }}"
-            controller_username: "{{ awx_admin_user | default('admin') }}"
-            controller_password: "{{ awx_admin_pass }}"
-            validate_certs: no
-            name: "{{ team.key }}"
-            organization: "{{ team.value.organization }}"
-            state: "{{ team.value.state | default('present') }}"
-          loop_control:
-            loop_var: team
-            label: "{{ team.key }}"
-          loop: "{{ awx_teams }}"
-          when: awx_organization_manage | default('yes') | bool
-          no_log: "{{ awx_nolog }}"
-          tags:
-            - teams
-
         - name: create awx galaxy credentials
           credential:
             controller_host: "{{ awx_local_url | urlsplit('hostname') }}"
             controller_username: "{{ awx_admin_user | default('admin') }}"
             controller_password: "{{ awx_admin_pass }}"
             validate_certs: no
-            organization: "{{ organization }}"
+            organization: "{{ organization.name }}"
             name: "{{ galaxy_credential.name }}"
             credential_type: "{{ galaxy_credential.credential_type }}"
             inputs: "{{ galaxy_credential.inputs }}"
             state: present
           vars:
-            galaxy_credential: "{{ item }}"
-            organization: "{{ galaxy_credential.organization }}"
+            organization: "{{ item.0 }}"
+            galaxy_credential: "{{ item.1 }}"
           loop_control:
             label: "{{ galaxy_credential.name }}"
-          loop: "{{ awx_galaxy_credentials | default([]) }}"
+          loop: "{{ awx_organizations | subelements('galaxy_credentials', skip_missing=True) }}"
           when:
             - galaxy_credential.state | default('present') != 'absent'
             - awx_organization_manage | default('yes') | bool
           no_log: "{{ awx_nolog }}"
           tags:
-            - credentials
+            - organizations
 
         - name: associate awx galaxy credentials
           organization:
@@ -414,7 +396,25 @@
             - awx_organization_manage | default('yes') | bool
           no_log: "{{ awx_nolog }}"
           tags:
-            - credentials
+            - organizations
+
+        - name: manage awx teams
+          team:
+            controller_host: "{{ awx_local_url | urlsplit('hostname') }}"
+            controller_username: "{{ awx_admin_user | default('admin') }}"
+            controller_password: "{{ awx_admin_pass }}"
+            validate_certs: no
+            name: "{{ team.key }}"
+            organization: "{{ team.value.organization }}"
+            state: "{{ team.value.state | default('present') }}"
+          loop_control:
+            loop_var: team
+            label: "{{ team.key }}"
+          loop: "{{ awx_teams }}"
+          when: awx_organization_manage | default('yes') | bool
+          no_log: "{{ awx_nolog }}"
+          tags:
+            - teams
 
         - name: create awx credentials
           credential:
