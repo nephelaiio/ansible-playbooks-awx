@@ -573,7 +573,9 @@
             permission: "{{ item.1 }}"
           loop_control:
             label: "{{ job_template.name }} - {{ permission.team }}"
-          loop: "{{ _awx_templates | subelements('permissions', skip_missing='yes') }}"
+          loop: "{{ _awx_templates | subelements('permissions', skip_missing=True) }}"
+          when:
+            - job_template.state | default('present') == 'present'
           no_log: "{{ awx_nolog }}"
           tags:
             - templates
