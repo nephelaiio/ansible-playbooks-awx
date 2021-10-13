@@ -26,7 +26,6 @@
           set_fact:
             _awx_template_vars: "{{ query('varnames', '^awx_templates_' + (awx_group | default('.*')) + '$') }}"
             _awx_workflow_vars: "{{ query('varnames', '^awx_workflows_' + (awx_group | default('.*')) + '$') }}"
-            _awx_schedule_vars: "{{ query('varnames', '^awx_schedules_' + (awx_group | default('.*')) + '$') }}"
             _awx_templates: []
             _awx_workflows: []
             _awx_schedules: []
@@ -47,10 +46,7 @@
 
         - name: gather schedule definitions
           set_fact:
-            _awx_schedules: "{{ _awx_schedules + _awx_schedules_defs }}"
-          vars:
-            _awx_schedules_defs: "{{ query('vars', item) | flatten }}"
-          loop: '{{ _awx_schedule_vars }}'
+            _awx_schedules: "{{ awx_schedules }}"
 
       tags:
         - always
